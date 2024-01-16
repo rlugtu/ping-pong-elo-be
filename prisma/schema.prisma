@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+
+model User {
+    id   String 
+    email String  @unique
+    firstName String
+    lastName  String?
+    department String?
+    accessToken String
+    createdAt DateTime @default(now()) @db.Timestamptz(6)
+    updatedAt    DateTime @updatedAt @db.Timestamptz(6)   
+    elo Int    
+}
+
+enum MatchState {
+    IN_PROGRESS
+    COMPLETED
+}
+
+enum WinnerSide {
+    sideA
+    sideB
+}
+
+model Match {
+    id String @id @default(cuid())
+    state MatchState @default(IN_PROGRESS)
+    sideA String[]
+    sideAScore Int
+    sideB String[]
+    sideBScore Int
+    winner WinnerSide?
+    winningScore Int
+    createdAt    DateTime @default(now()) @db.Timestamptz(6)
+    updatedAt    DateTime @updatedAt @db.Timestamptz(6)       
+}
