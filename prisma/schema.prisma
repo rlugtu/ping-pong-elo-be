@@ -24,6 +24,7 @@ model User {
 }
 
 enum MatchState {
+    SETUP
     IN_PROGRESS
     COMPLETED
 }
@@ -35,7 +36,7 @@ enum WinnerSide {
 
 model Match {
     id String @id @default(cuid())
-    state MatchState @default(IN_PROGRESS)
+    state MatchState @default(SETUP)
     sideA String[]
     sideAScore Int
     sideB String[]
