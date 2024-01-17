@@ -18,22 +18,25 @@ model User {
     department String?
     accessToken String
     currentElo Int
-    eloHistory Elo[]    
-    teams UserTeams[]
-    
+
     createdAt DateTime @default(now()) @db.Timestamptz(6)
-    updatedAt DateTime @updatedAt @db.Timestamptz(6)  
+    updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+    // relations
+    eloHistory Elo[]    
+    teams UserTeams[]  
 }
 
 model Elo {
     id String @id @default(cuid())
     elo Int
 
-    user User @relation(fields: [userId], references: [id])
-    userId String
-    
     createdAt DateTime @default(now()) @db.Timestamptz(6)
     updatedAt DateTime @updatedAt @db.Timestamptz(6)
+    
+    // relations
+    user User @relation(fields: [userId], references: [id])
+    userId String
 }
 
 model UserTeams {
@@ -45,7 +48,7 @@ model UserTeams {
     createdAt DateTime @default(now()) @db.Timestamptz(6)
     updatedAt    DateTime @updatedAt @db.Timestamptz(6)   
     
-    @@id([userId, teamId])
+    @@id(name: "userTeams", [userId, teamId])
 }
 
 
@@ -53,6 +56,10 @@ model Team {
     id String @id @default(cuid())
     score TeamScore[]
     users UserTeams[]
+
+    createdAt   DateTime @default(now()) @db.Timestamptz(6)
+    updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+
     // relations
     teamA Match[] @relation("teamA")
     teamB Match[] @relation("teamB")
@@ -62,6 +69,9 @@ model Team {
 model TeamScore {
     id String @id @default(cuid())
     score Int
+
+    createdAt   DateTime @default(now()) @db.Timestamptz(6)
+    updatedAt   DateTime @updatedAt @db.Timestamptz(6)
 
     // relations
     team Team @relation(fields: [teamId], references: [id])
@@ -83,14 +93,13 @@ model Match {
     state MatchState @default(SETUP)
     winningScore Int
  
+    createdAt   DateTime @default(now()) @db.Timestamptz(6)
+    updatedAt   DateTime @updatedAt @db.Timestamptz(6)   
+
     // relations
     teamA Team @relation(fields: [teamAId], references: [id],  name: "teamA") 
     teamAId String 
     teamB Team @relation(fields: [teamBId], references: [id],  name: "teamB") 
     teamBId String 
     teamScores TeamScore[]
-
-    createdAt    DateTime @default(now()) @db.Timestamptz(6)
-    updatedAt    DateTime @updatedAt @db.Timestamptz(6)   
 }
-
