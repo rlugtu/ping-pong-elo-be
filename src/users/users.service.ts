@@ -19,14 +19,31 @@ export class UsersService {
         return `This action returns all users`
     }
 
-    findOne(id: string): UserEntity {
-        const user = this.prisma.user.findFirstOrThrow({
+    async findOne(id: string): Promise<UserEntity> {
+        const user = await this.prisma.user.findFirstOrThrow({
             where: {
                 id,
             },
         })
 
         return plainToClass(UserEntity, user)
+    }
+
+    async findPlayerInfoById(id: string): Promise<{
+        firstName: string
+        lastName: string
+        id: string
+        elo: number
+        department: string
+    }> {
+        const user = await this.findOne(id)
+        return {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            id,
+            elo: user.elo,
+            department: user.department,
+        }
     }
 
     update(id: number, updateUserDto: UpdateUserDto) {

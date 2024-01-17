@@ -6,7 +6,6 @@ export class CreateMatchDto {
     sideA: string[]
 
     @IsArray()
-    @ArrayMinSize(1)
     sideB: string[]
 
     @IsNumber()
