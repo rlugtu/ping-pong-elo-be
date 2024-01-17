@@ -17,7 +17,7 @@ model User {
     lastName  String?
     department String?
     accessToken String
-    currentElo Int
+    currentElo Int @default(1400)
 
     createdAt DateTime @default(now()) @db.Timestamptz(6)
     updatedAt DateTime @updatedAt @db.Timestamptz(6)
