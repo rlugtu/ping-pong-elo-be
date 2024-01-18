@@ -43,10 +43,38 @@ export class MatchService {
                         },
                     },
                 },
+                teamB: {
+                    include: {
+                        users: {
+                            include: {
+                                user: true,
+                            },
+                        },
+                    },
+                },
             },
         })
 
-        return lobbies
+        // lobbies.forEach((lobby) => {
+        //     lobby.teamA.users.forEach((user) => {
+        //         user = user.user
+        //     })
+        // })
+        const test = lobbies.map((lobby) => {
+            return {
+                ...lobby,
+                teamA: {
+                    ...lobby.teamA,
+                    users: lobby.teamA.users.map((user) => user.user),
+                },
+                teamB: {
+                    ...lobby.teamB,
+                    users: lobby.teamB?.users.map((user) => user.user) ?? [],
+                },
+            }
+        })
+
+        return test
     }
 
     findAll() {
@@ -74,6 +102,7 @@ export class MatchService {
                         id: teamToJoin.id,
                     },
                 },
+                state: 'IN_PROGRESS',
             },
         })
     }
