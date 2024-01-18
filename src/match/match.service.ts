@@ -4,6 +4,7 @@ import { JoinMatchDto, UpdateMatchDto } from './dto/update-match.dto'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { UsersService } from 'src/users/users.service'
 import { TeamService } from 'src/team/team.service'
+import { Match } from '@prisma/client'
 
 @Injectable()
 export class MatchService {
@@ -55,12 +56,7 @@ export class MatchService {
             },
         })
 
-        // lobbies.forEach((lobby) => {
-        //     lobby.teamA.users.forEach((user) => {
-        //         user = user.user
-        //     })
-        // })
-        const test = lobbies.map((lobby) => {
+        const formattedLobbies = lobbies.map((lobby) => {
             return {
                 ...lobby,
                 teamA: {
@@ -74,7 +70,37 @@ export class MatchService {
             }
         })
 
-        return test
+        return formattedLobbies
+    }
+
+    async getUserCurrentMatches(token: string): Promise<Match[]> {
+        const user = await this.prisma.user.findFirst({
+            where: {
+                accessToken: token,
+            },
+        })
+
+        const matches = await this.prisma.match.findMany({
+            where: {
+                state: 'IN_PROGRESS',
+                teamA: {
+                    users: {
+                        some: {
+                            userId: user.id,
+                        },
+                    },
+                },
+                teamB: {
+                    users: {
+                        some: {
+                            userId: user.id,
+                        },
+                    },
+                },
+            },
+        })
+
+        return matches
     }
 
     findAll() {

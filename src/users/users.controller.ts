@@ -19,15 +19,6 @@ export class UsersController {
         return this.usersService.findAll()
     }
 
-    @Get(':id/name')
-    findPlayerInfoById(@Param('id') id: string, @Headers('authorization') token: string) {
-        try {
-            return this.usersService.findPlayerInfoById(id)
-        } catch (error) {
-            console.log({ error, id, token })
-        }
-    }
-
     @Get(':id')
     findOne(@Param('id') id: string, @Headers('authorization') token: string) {
         try {

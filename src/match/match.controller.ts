@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common'
+import { Controller, Get, Post, Body, Patch, Param, Delete, Headers } from '@nestjs/common'
 import { MatchService } from './match.service'
 import { CreateMatchDto } from './dto/create-match.dto'
 import { JoinMatchDto, UpdateMatchDto } from './dto/update-match.dto'
+import { Match } from '@prisma/client'
 
 @Controller('match')
 export class MatchController {
@@ -18,6 +19,13 @@ export class MatchController {
     getAllLobbies() {
         try {
             return this.matchService.getAllOpenLobbies()
+        } catch (error) {}
+    }
+
+    @Get('current-matches')
+    async getUserCurrentMatches(@Headers('authorization') token: string): Promise<Match[]> {
+        try {
+            return this.matchService.getUserCurrentMatches(token)
         } catch (error) {}
     }
 

@@ -1,5 +1,16 @@
 import { IsEmail, IsNumber, IsOptional, IsString } from 'class-validator'
 
+export class GetUserDto {
+    @IsString()
+    id: string
+
+    @IsString()
+    accessToken: string
+
+    @IsString()
+    firstName: string
+}
+
 export class CreateUserDto {
     @IsString()
     id: string
@@ -21,7 +32,6 @@ export class CreateUserDto {
     @IsEmail()
     email: string
 
-    @IsOptional()
     @IsString()
     accessToken: string
 }
