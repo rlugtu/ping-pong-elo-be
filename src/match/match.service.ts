@@ -12,51 +12,14 @@ export class MatchService {
     ) {}
 
     async create(createMatchDto: CreateMatchDto) {
-        // finds all teams that players in included in
-        const userTeams = await this.prisma.team.findMany({
-            include: {
-                users: {
-                    where: {
-                        userId: { in: createMatchDto.teamA },
-                    },
-                },
-            },
-        })
-
-        // check if the team already exists
-        const foundTeam = userTeams.filter((team) => {
-            const sameLength = team.users.length === createMatchDto.teamA.length
-
-            const samePlayers = team.users.every((user) => {
-                return createMatchDto.teamA.includes(user.userId)
-            })
-
-            return sameLength && samePlayers
-        })
-
-        const teamToAdd =
-            foundTeam.length === 1
-                ? foundTeam[0]
-                : await this.prisma.team.create({
-                      data: {
-                          users: {
-                              create: createMatchDto.teamA.map((userId) => {
-                                  return {
-                                      user: {
-                                          connect: { id: userId },
-                                      },
-                                  }
-                              }),
-                          },
-                      },
-                  })
+        const teamToJoin = await this.prisma.findOrCreateTeam(createMatchDto.teamA)
 
         return this.prisma.match.create({
             data: {
                 ...createMatchDto,
                 teamA: {
                     connect: {
-                        id: teamToAdd.id,
+                        id: teamToJoin.id,
                     },
                 },
             },
@@ -86,17 +49,20 @@ export class MatchService {
     }
 
     async joinMatch(id: string, joinMatchDto: JoinMatchDto) {
-        const res = await this.prisma.match.update({
+        const teamToJoin = await this.prisma.findOrCreateTeam(joinMatchDto.teamB)
+
+        return this.prisma.match.update({
             where: {
                 id,
             },
             data: {
-                ...joinMatchDto,
-                state: 'IN_PROGRESS',
+                teamB: {
+                    connect: {
+                        id: teamToJoin.id,
+                    },
+                },
             },
         })
-        console.log({ res })
-        return res
     }
 
     remove(id: number) {
