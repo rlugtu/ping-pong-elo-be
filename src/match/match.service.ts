@@ -3,16 +3,18 @@ import { CreateMatchDto } from './dto/create-match.dto'
 import { JoinMatchDto, UpdateMatchDto } from './dto/update-match.dto'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { UsersService } from 'src/users/users.service'
+import { TeamService } from 'src/team/team.service'
 
 @Injectable()
 export class MatchService {
     constructor(
         private prisma: PrismaService,
         private userService: UsersService,
+        private teamService: TeamService,
     ) {}
 
     async create(createMatchDto: CreateMatchDto) {
-        const teamToJoin = await this.prisma.findOrCreateTeam(createMatchDto.teamA)
+        const teamToJoin = await this.teamService.findOrCreateTeam(createMatchDto.teamA)
 
         return this.prisma.match.create({
             data: {
@@ -49,7 +51,7 @@ export class MatchService {
     }
 
     async joinMatch(id: string, joinMatchDto: JoinMatchDto) {
-        const teamToJoin = await this.prisma.findOrCreateTeam(joinMatchDto.teamB)
+        const teamToJoin = await this.teamService.findOrCreateTeam(joinMatchDto.teamB)
 
         return this.prisma.match.update({
             where: {
