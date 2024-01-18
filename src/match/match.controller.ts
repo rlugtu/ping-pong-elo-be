@@ -9,12 +9,16 @@ export class MatchController {
 
     @Post()
     create(@Body() createMatchDto: CreateMatchDto) {
-        return this.matchService.create(createMatchDto)
+        try {
+            return this.matchService.create(createMatchDto)
+        } catch (error) {}
     }
 
     @Get('lobbies')
     getAllLobbies() {
-        return this.matchService.getAllOpenLobbies()
+        try {
+            return this.matchService.getAllOpenLobbies()
+        } catch (error) {}
     }
 
     @Get()

@@ -3,7 +3,6 @@ import { CreateMatchDto } from './dto/create-match.dto'
 import { JoinMatchDto, UpdateMatchDto } from './dto/update-match.dto'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { UsersService } from 'src/users/users.service'
-import { join } from 'path'
 
 @Injectable()
 export class MatchService {
@@ -12,30 +11,66 @@ export class MatchService {
         private userService: UsersService,
     ) {}
 
-    create(createMatchDto: CreateMatchDto) {
+    async create(createMatchDto: CreateMatchDto) {
+        // finds all teams that players in included in
+        const userTeams = await this.prisma.team.findMany({
+            include: {
+                users: {
+                    where: {
+                        userId: { in: createMatchDto.teamA },
+                    },
+                },
+            },
+        })
+
+        // check if the team already exists
+        const foundTeam = userTeams.filter((team) => {
+            const sameLength = team.users.length === createMatchDto.teamA.length
+
+            const samePlayers = team.users.every((user) => {
+                return createMatchDto.teamA.includes(user.userId)
+            })
+
+            return sameLength && samePlayers
+        })
+
+        const teamToAdd =
+            foundTeam.length === 1
+                ? foundTeam[0]
+                : await this.prisma.team.create({
+                      data: {
+                          users: {
+                              create: createMatchDto.teamA.map((userId) => {
+                                  return {
+                                      user: {
+                                          connect: { id: userId },
+                                      },
+                                  }
+                              }),
+                          },
+                      },
+                  })
+
         return this.prisma.match.create({
-            data: createMatchDto,
+            data: {
+                ...createMatchDto,
+                teamA: {
+                    connect: {
+                        id: teamToAdd.id,
+                    },
+                },
+            },
         })
     }
+
     async getAllOpenLobbies() {
-        const matches = await this.prisma.match.findMany({
+        const lobbies = await this.prisma.match.findMany({
             where: {
                 state: 'SETUP',
             },
         })
-        const lobbies = matches.map(async (match) => {
-            return {
-                id: match.id,
-                sideA: [
-                    {
-                        ...(await this.userService.findPlayerInfoById(match.sideA[0])),
-                    },
-                ],
-                sideB: [{}],
-                winningScore: match.winningScore,
-            }
-        })
-        return await Promise.all(lobbies)
+
+        return lobbies
     }
 
     findAll() {

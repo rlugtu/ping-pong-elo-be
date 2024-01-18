@@ -33,7 +33,6 @@ export class UsersService {
         firstName: string
         lastName: string
         id: string
-        elo: number
         department: string
     }> {
         const user = await this.findOne(id)
@@ -41,7 +40,6 @@ export class UsersService {
             firstName: user.firstName,
             lastName: user.lastName,
             id,
-            elo: user.elo,
             department: user.department,
         }
     }

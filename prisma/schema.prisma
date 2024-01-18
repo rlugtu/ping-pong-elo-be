@@ -41,14 +41,15 @@ model Elo {
 
 model UserTeams {
     user User @relation(fields: [userId], references: [id])
-    userId String @unique
+    userId String 
+
     team Team @relation(fields: [teamId], references: [id])
-    teamId String @unique
+    teamId String 
     
     createdAt DateTime @default(now()) @db.Timestamptz(6)
     updatedAt    DateTime @updatedAt @db.Timestamptz(6)   
     
-    @@id(name: "userTeams", [userId, teamId])
+    @@id(name: "id", [userId, teamId])
 }
 
 
@@ -92,14 +93,14 @@ model Match {
     id String @id @default(cuid())
     state MatchState @default(SETUP)
     winningScore Int
- 
+
     createdAt   DateTime @default(now()) @db.Timestamptz(6)
     updatedAt   DateTime @updatedAt @db.Timestamptz(6)   
 
     // relations
     teamA Team @relation(fields: [teamAId], references: [id],  name: "teamA") 
     teamAId String 
-    teamB Team @relation(fields: [teamBId], references: [id],  name: "teamB") 
-    teamBId String 
+    teamB Team? @relation(fields: [teamBId], references: [id],  name: "teamB")
+    teamBId String ?
     teamScores TeamScore[]
 }
