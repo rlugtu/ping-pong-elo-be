@@ -22,7 +22,7 @@ export class UsersController {
     @Get(':id')
     findOne(@Param('id') id: string, @Headers('authorization') token: string) {
         try {
-            return this.usersService.findOne(id)
+            return this.usersService.findOne(id, token)
         } catch (error) {
             console.log({ error, id, token })
         }
