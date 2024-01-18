@@ -41,11 +41,9 @@ export class TeamService {
 
         // check if the team composition already exists
         const foundTeam = userTeams.filter((team) => {
-            const samePlayers = team.users.every((user) => {
-                return userIds.includes(user.userId)
+            return team.users.every((user) => {
+                return userIds.includes(user.userId) && team.users.length === userIds.length
             })
-
-            return samePlayers
         })
 
         if (!foundTeam.length) {
