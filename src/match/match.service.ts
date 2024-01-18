@@ -33,6 +33,17 @@ export class MatchService {
             where: {
                 state: 'SETUP',
             },
+            include: {
+                teamA: {
+                    include: {
+                        users: {
+                            include: {
+                                user: true,
+                            },
+                        },
+                    },
+                },
+            },
         })
 
         return lobbies

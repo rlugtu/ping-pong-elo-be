@@ -20,9 +20,17 @@ export class UsersService {
     }
 
     async findOne(id: string): Promise<UserEntity> {
-        const user = await this.prisma.user.findFirstOrThrow({
+        const user = await this.prisma.user.upsert({
             where: {
                 id,
+            },
+            update: {},
+            create: {
+                id,
+                email: '',
+                firstName: 'ryan',
+                lastName: '',
+                accessToken: '',
             },
         })
 
