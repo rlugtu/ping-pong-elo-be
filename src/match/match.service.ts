@@ -5,6 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service'
 import { UsersService } from 'src/users/users.service'
 import { TeamService } from 'src/team/team.service'
 import { Match } from '@prisma/client'
+import { formatTeamUsers } from 'src/utils/match'
 
 @Injectable()
 export class MatchService {
@@ -98,9 +99,35 @@ export class MatchService {
                     },
                 },
             },
+            include: {
+                teamA: {
+                    include: {
+                        users: {
+                            include: {
+                                user: true,
+                            },
+                        },
+                    },
+                },
+                teamB: {
+                    include: {
+                        users: {
+                            include: {
+                                user: true,
+                            },
+                        },
+                    },
+                },
+            },
         })
 
-        return matches
+        return matches.map((match) => {
+            return {
+                ...match,
+                teamA: formatTeamUsers(match.teamA),
+                teamB: formatTeamUsers(match.teamB),
+            }
+        })
     }
 
     findAll() {

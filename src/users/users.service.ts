@@ -9,9 +9,9 @@ import { UserEntity } from './entities/user.entity'
 export class UsersService {
     constructor(private prisma: PrismaService) {}
 
-    create(createUserDto: CreateUserDto) {
+    create(createUserDto: CreateUserDto, accessToken: string) {
         return this.prisma.user.create({
-            data: createUserDto,
+            data: { ...createUserDto, accessToken },
         })
     }
 
@@ -20,20 +20,23 @@ export class UsersService {
     }
 
     async findOne(id: string, accessToken: string): Promise<UserEntity> {
-        const user = await this.prisma.user.upsert({
+        // need to add accessToken here
+        const user = await this.prisma.user.findFirst({
             where: {
-                accessToken,
-            },
-            update: {},
-            create: {
                 id,
-                email: '',
-                firstName: '',
-                lastName: '',
-                accessToken,
             },
-            include: {},
         })
+
+        if (user) {
+            await this.prisma.user.update({
+                where: {
+                    id,
+                },
+                data: {
+                    accessToken,
+                },
+            })
+        }
 
         return plainToClass(UserEntity, user)
     }

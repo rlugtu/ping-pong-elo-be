@@ -2,16 +2,22 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Headers } from '@nes
 import { UsersService } from './users.service'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
+import { parseBearerToken } from 'src/utils/util'
 
 @Controller('users')
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
 
     @Post()
-    create(@Body() createUserDto: CreateUserDto, @Headers('authorization') token: string) {
-        console.log(token)
-        const test = { ...createUserDto, accessToken: token }
-        return this.usersService.create(test)
+    create(@Body() createUserDto: CreateUserDto, @Headers('authorization') accessToken: string) {
+        try {
+            console.log('creating...')
+            accessToken = parseBearerToken(accessToken)
+
+            return this.usersService.create(createUserDto, accessToken)
+        } catch (error) {
+            console.log(error)
+        }
     }
 
     @Get()
@@ -20,11 +26,13 @@ export class UsersController {
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string, @Headers('authorization') token: string) {
+    findOne(@Param('id') id: string, @Headers('authorization') accessToken: string) {
         try {
-            return this.usersService.findOne(id, token)
+            accessToken = parseBearerToken(accessToken)
+            return this.usersService.findOne(id, accessToken)
         } catch (error) {
-            console.log({ error, id, token })
+            console.log(error)
+            // console.log({ error, id, accessToken })
         }
     }
 

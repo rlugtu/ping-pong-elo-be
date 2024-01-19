@@ -3,6 +3,7 @@ import { MatchService } from './match.service'
 import { CreateMatchDto } from './dto/create-match.dto'
 import { JoinMatchDto, UpdateMatchDto } from './dto/update-match.dto'
 import { Match } from '@prisma/client'
+import { parseBearerToken } from 'src/utils/util'
 
 @Controller('match')
 export class MatchController {
@@ -22,10 +23,11 @@ export class MatchController {
         } catch (error) {}
     }
 
-    @Get('current-matches')
+    @Get('in-progress')
     async getUserCurrentMatches(@Headers('authorization') token: string): Promise<Match[]> {
         try {
-            return this.matchService.getUserCurrentMatches(token)
+            const authToken = parseBearerToken(token)
+            return this.matchService.getUserCurrentMatches(authToken)
         } catch (error) {}
     }
 

@@ -1,9 +1,22 @@
-import { CreateMatchDto } from 'src/match/dto/create-match.dto'
-
-// export function prepareMatchDtoForCreate(match: CreateMatchDto): CreateMatchDto {
-//     return {
-//         ...match,
-//         sideAScore: 0,
-//         sideBScore: 0,
-//     }
-// }
+export interface PrismaTeamWithUsers {
+    users: ({
+        user: {
+            id: string
+            accessToken: string
+            email: string
+            firstName: string
+            lastName: string
+            department: string
+            createdAt: Date
+            updatedAt: Date
+        }
+    } & {
+        userId: string
+        teamId: string
+        createdAt: Date
+        updatedAt: Date
+    })[]
+}
+export function formatTeamUsers(team: PrismaTeamWithUsers) {
+    return { ...team, users: team.users.map((user) => user.user) }
+}

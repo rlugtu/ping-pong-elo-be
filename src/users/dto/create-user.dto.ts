@@ -1,4 +1,4 @@
-import { IsEmail, IsNumber, IsOptional, IsString } from 'class-validator'
+import { IsEmail, IsOptional, IsString } from 'class-validator'
 
 export class GetUserDto {
     @IsString()
@@ -21,9 +21,6 @@ export class CreateUserDto {
     @IsString()
     lastName: string
 
-    @IsNumber()
-    elo: number
-
     @IsString()
     @IsOptional()
     department: string
@@ -31,7 +28,4 @@ export class CreateUserDto {
     @IsOptional()
     @IsEmail()
     email: string
-
-    @IsString()
-    accessToken: string
 }
