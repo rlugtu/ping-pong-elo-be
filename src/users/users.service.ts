@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { CreateUserDto, GetUserDto } from './dto/create-user.dto'
+import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { plainToClass } from 'class-transformer'
@@ -45,7 +45,6 @@ export class UsersService {
     }
 
     async findOne(id: string, accessToken: string): Promise<UserEntity> {
-        // need to add accessToken here
         const user = await this.prisma.user.findFirst({
             where: {
                 id,

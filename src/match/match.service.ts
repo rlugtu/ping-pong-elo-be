@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { CreateMatchDto } from './dto/create-match.dto'
 import { JoinMatchDto, UpdateMatchDto, UpdateMatchScoreDto } from './dto/update-match.dto'
 import { PrismaService } from 'src/prisma/prisma.service'
@@ -29,14 +29,9 @@ export class MatchService {
                     },
                 },
                 teamScores: {
-                    connectOrCreate: {
-                        where: {
-                            teamId: teamToJoin.id,
-                        },
-                        create: {
-                            score: 0,
-                            teamId: teamToJoin.id,
-                        },
+                    create: {
+                        score: 0,
+                        teamId: teamToJoin.id,
                     },
                 },
             },
@@ -183,6 +178,8 @@ export class MatchService {
             },
         })
 
+        console.log(match)
+
         // if (match.teamScores.length < 2) {
         //     throw new NotFoundException('Teams for match not found')
         // }
@@ -192,6 +189,9 @@ export class MatchService {
             (teamScore) => teamScore.teamId === match.teamAId,
         )[0]
 
+        if (!teamAInfo) {
+            throw new Error('not found')
+        }
         const teamA = plainToClass(MatchTeam, {
             ...teamAInfo.team,
             score: teamAInfo.score,
@@ -223,10 +223,30 @@ export class MatchService {
     async updateMatchScore(matchId: string, scoreData: UpdateMatchScoreDto): Promise<void> {
         const { score, teamId } = scoreData
 
+        // const match = await this.prisma.match.findFirst({
+        //     where: {
+        //         id: matchId,
+        //     },
+        // })
+
+        // // Check if win condition has been reached
+        // if (scoreData.score >= match.winningScore) {
+        //     await this.prisma.match.update({
+        //         where: {
+        //             id: matchId,
+        //         },
+        //         data: {
+        //             state: 'COMPLETED',
+        //         },
+        //     })
+        // }
+
         await this.prisma.teamScore.update({
             where: {
-                teamId,
-                matchId,
+                teamIdMatchId: {
+                    teamId,
+                    matchId,
+                },
             },
             data: {
                 score,

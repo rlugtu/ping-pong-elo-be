@@ -77,10 +77,12 @@ model TeamScore {
 
     // relations
     team Team @relation(fields: [teamId], references: [id])
-    teamId String @unique
+    teamId String
     
     match Match @relation(fields: [matchId], references: [id])
     matchId String
+
+    @@unique(name: "teamIdMatchId",[teamId, matchId])
 }
 
 enum MatchMode {

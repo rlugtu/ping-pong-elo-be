@@ -11,7 +11,6 @@ export class UsersController {
     @Post()
     create(@Body() createUserDto: CreateUserDto, @Headers('authorization') accessToken: string) {
         try {
-            console.log('creating...')
             accessToken = parseBearerToken(accessToken)
 
             return this.usersService.create(createUserDto, accessToken)
