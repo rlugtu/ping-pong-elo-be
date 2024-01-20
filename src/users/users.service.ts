@@ -4,15 +4,40 @@ import { UpdateUserDto } from './dto/update-user.dto'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { plainToClass } from 'class-transformer'
 import { UserEntity } from './entities/user.entity'
+import { TeamService } from 'src/team/team.service'
 
 @Injectable()
 export class UsersService {
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private prisma: PrismaService,
+        private teamService: TeamService,
+    ) {}
 
-    create(createUserDto: CreateUserDto, accessToken: string) {
-        return this.prisma.user.create({
+    async create(createUserDto: CreateUserDto, accessToken: string) {
+        const user = await this.prisma.user.create({
             data: { ...createUserDto, accessToken },
         })
+
+        this.prisma.team.create({
+            data: {
+                users: {
+                    create: {
+                        user: {
+                            connect: {
+                                id: user.id,
+                            },
+                        },
+                    },
+                },
+                eloHistory: {
+                    create: {
+                        elo: 1400,
+                    },
+                },
+            },
+        })
+
+        return user
     }
 
     findAll() {
@@ -38,7 +63,13 @@ export class UsersService {
             })
         }
 
-        return plainToClass(UserEntity, user)
+        const soloTeam = await this.teamService.findOrCreateTeam([id])
+
+        console.log({ soloTeam })
+
+        const res = plainToClass(UserEntity, { ...user, ...soloTeam })
+        console.log(res)
+        return res
     }
 
     update(id: number, updateUserDto: UpdateUserDto) {

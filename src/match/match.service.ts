@@ -6,6 +6,8 @@ import { UsersService } from 'src/users/users.service'
 import { TeamService } from 'src/team/team.service'
 import { Match } from '@prisma/client'
 import { formatTeamUsers } from 'src/utils/match'
+import { FormattedMatch, MatchTeam } from './entities/match.entity'
+import { plainToClass } from 'class-transformer'
 
 @Injectable()
 export class MatchService {
@@ -18,7 +20,7 @@ export class MatchService {
     async create(createMatchDto: CreateMatchDto) {
         const teamToJoin = await this.teamService.findOrCreateTeam(createMatchDto.teamA)
 
-        return this.prisma.match.create({
+        const match = this.prisma.match.create({
             data: {
                 ...createMatchDto,
                 teamA: {
@@ -26,8 +28,21 @@ export class MatchService {
                         id: teamToJoin.id,
                     },
                 },
+                teamScores: {
+                    connectOrCreate: {
+                        where: {
+                            teamId: teamToJoin.id,
+                        },
+                        create: {
+                            score: 0,
+                            teamId: teamToJoin.id,
+                        },
+                    },
+                },
             },
         })
+
+        return match
     }
 
     async getAllOpenLobbies() {
@@ -130,16 +145,72 @@ export class MatchService {
         })
     }
 
+    async updateScore(matchId: string): Promise<Match> {
+        return
+    }
+
     findAll() {
         return `This action returns all match`
     }
 
-    async findOne(id: string): Promise<Match> {
-        return await this.prisma.match.findUniqueOrThrow({
+    async findOne(id: string): Promise<FormattedMatch> {
+        const match = await this.prisma.match.findUniqueOrThrow({
             where: {
                 id,
             },
+            include: {
+                teamScores: {
+                    where: {
+                        matchId: id,
+                    },
+                    include: {
+                        team: {
+                            include: {
+                                users: {
+                                    include: {
+                                        user: true,
+                                    },
+                                },
+                                eloHistory: {
+                                    orderBy: {
+                                        elo: 'desc',
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
         })
+
+        const teamAInfo = match.teamScores.filter(
+            (teamScore) => teamScore.teamId === match.teamAId,
+        )[0]
+
+        const teamA = plainToClass(MatchTeam, {
+            ...teamAInfo.team,
+            score: teamAInfo.score,
+            users: teamAInfo.team.users.map((user) => user.user),
+            elo: teamAInfo.team.eloHistory[0].elo,
+        })
+
+        const teamBInfo = match.teamScores.filter(
+            (teamScore) => teamScore.teamId === match.teamBId,
+        )[0]
+
+        const teamB = plainToClass(MatchTeam, {
+            ...teamBInfo.team,
+            score: teamBInfo.score,
+            users: teamBInfo.team.users.map((user) => user.user),
+        })
+
+        const formatted = {
+            ...match,
+            teamA,
+            teamB,
+        }
+
+        return plainToClass(FormattedMatch, formatted)
     }
 
     update(id: number, updateMatchDto: UpdateMatchDto) {

@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Headers } from '@nestjs/common'
 import { MatchService } from './match.service'
 import { CreateMatchDto } from './dto/create-match.dto'
-import { JoinMatchDto, UpdateMatchDto } from './dto/update-match.dto'
+import { JoinMatchDto, UpdateMatchDto, UpdateMatchScoreDto } from './dto/update-match.dto'
 import { Match } from '@prisma/client'
 import { parseBearerToken } from 'src/utils/util'
 
@@ -51,6 +51,12 @@ export class MatchController {
         } catch (error) {
             console.log({ error })
         }
+    }
+
+    @Patch(':/score')
+    async updateScore(@Param('id') id: string, @Body() updateMatchScore: UpdateMatchScoreDto) {
+        try {
+        } catch (error) {}
     }
 
     @Patch(':id')

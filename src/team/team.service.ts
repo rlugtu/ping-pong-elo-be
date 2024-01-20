@@ -36,6 +36,14 @@ export class TeamService {
                         userId: { in: userIds },
                     },
                 },
+                eloHistory: {
+                    include: {
+                        team: true,
+                    },
+                    orderBy: {
+                        elo: 'asc',
+                    },
+                },
             },
         })
 
@@ -57,6 +65,11 @@ export class TeamService {
                                 },
                             }
                         }),
+                    },
+                    eloHistory: {
+                        create: {
+                            elo: 1400,
+                        },
                     },
                 },
             })
