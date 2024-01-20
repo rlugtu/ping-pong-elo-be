@@ -83,6 +83,10 @@ model TeamScore {
     matchId String
 }
 
+enum MatchMode {
+    SINGLES
+    DOUBLES
+}
 
 enum MatchState {
     SETUP
@@ -94,6 +98,7 @@ model Match {
     id String @id @default(cuid())
     state MatchState @default(SETUP)
     winningScore Int
+    mode MatchMode
 
     createdAt   DateTime @default(now()) @db.Timestamptz(6)
     updatedAt   DateTime @updatedAt @db.Timestamptz(6)   
