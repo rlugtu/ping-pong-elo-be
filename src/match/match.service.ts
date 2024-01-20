@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { CreateMatchDto } from './dto/create-match.dto'
-import { JoinMatchDto, UpdateMatchDto } from './dto/update-match.dto'
+import { JoinMatchDto, UpdateMatchDto, UpdateMatchScoreDto } from './dto/update-match.dto'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { UsersService } from 'src/users/users.service'
 import { TeamService } from 'src/team/team.service'
@@ -153,15 +153,15 @@ export class MatchService {
         return `This action returns all match`
     }
 
-    async findOne(id: string): Promise<FormattedMatch> {
+    async findOne(matchId: string): Promise<FormattedMatch> {
         const match = await this.prisma.match.findUniqueOrThrow({
             where: {
-                id,
+                id: matchId,
             },
             include: {
                 teamScores: {
                     where: {
-                        matchId: id,
+                        matchId,
                     },
                     include: {
                         team: {
@@ -183,6 +183,11 @@ export class MatchService {
             },
         })
 
+        // if (match.teamScores.length < 2) {
+        //     throw new NotFoundException('Teams for match not found')
+        // }
+
+        // Add Error handling if filter returns []
         const teamAInfo = match.teamScores.filter(
             (teamScore) => teamScore.teamId === match.teamAId,
         )[0]
@@ -194,6 +199,7 @@ export class MatchService {
             elo: teamAInfo.team.eloHistory[0].elo,
         })
 
+        // Add Error handling if filter returns []
         const teamBInfo = match.teamScores.filter(
             (teamScore) => teamScore.teamId === match.teamBId,
         )[0]
@@ -202,6 +208,7 @@ export class MatchService {
             ...teamBInfo.team,
             score: teamBInfo.score,
             users: teamBInfo.team.users.map((user) => user.user),
+            elo: teamBInfo.team.eloHistory[0].elo,
         })
 
         const formatted = {
@@ -211,6 +218,20 @@ export class MatchService {
         }
 
         return plainToClass(FormattedMatch, formatted)
+    }
+
+    async updateMatchScore(matchId: string, scoreData: UpdateMatchScoreDto): Promise<void> {
+        const { score, teamId } = scoreData
+
+        await this.prisma.teamScore.update({
+            where: {
+                teamId,
+                matchId,
+            },
+            data: {
+                score,
+            },
+        })
     }
 
     update(id: number, updateMatchDto: UpdateMatchDto) {

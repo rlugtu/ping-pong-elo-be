@@ -43,20 +43,22 @@ export class MatchController {
         } catch (error) {}
     }
 
-    @Patch(':id/join')
-    async joinMatch(@Param('id') id: string, @Body() joinMatchDto: JoinMatchDto) {
+    @Patch(':id/score')
+    async updateMatchScore(@Param('id') id: string, @Body() scoreData: UpdateMatchScoreDto) {
         try {
-            console.log('trying')
-            return await this.matchService.joinMatch(id, joinMatchDto)
+            return await this.matchService.updateMatchScore(id, scoreData)
         } catch (error) {
             console.log({ error })
         }
     }
 
-    @Patch(':/score')
-    async updateScore(@Param('id') id: string, @Body() updateMatchScore: UpdateMatchScoreDto) {
+    @Patch(':id/join')
+    async joinMatch(@Param('id') id: string, @Body() joinMatchDto: JoinMatchDto) {
         try {
-        } catch (error) {}
+            return await this.matchService.joinMatch(id, joinMatchDto)
+        } catch (error) {
+            console.log({ error })
+        }
     }
 
     @Patch(':id')
