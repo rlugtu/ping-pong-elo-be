@@ -37,8 +37,10 @@ export class MatchController {
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.matchService.findOne(+id)
+    async findOne(@Param('id') id: string) {
+        try {
+            return this.matchService.findOne(id)
+        } catch (error) {}
     }
 
     @Patch(':id/join')

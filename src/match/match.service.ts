@@ -134,8 +134,12 @@ export class MatchService {
         return `This action returns all match`
     }
 
-    findOne(id: number) {
-        return `This action returns a #${id} match`
+    async findOne(id: string): Promise<Match> {
+        return await this.prisma.match.findUniqueOrThrow({
+            where: {
+                id,
+            },
+        })
     }
 
     update(id: number, updateMatchDto: UpdateMatchDto) {
