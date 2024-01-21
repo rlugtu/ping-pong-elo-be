@@ -5,7 +5,6 @@ import { PrismaService } from 'src/prisma/prisma.service'
 import { Team } from '@prisma/client'
 import { Team as FormattedTeam } from './entities/team.entity'
 import { TeamQueryParams } from 'src/types/team'
-import { flattenTeamUsersArray } from 'src/utils/match'
 import { plainToClass } from 'class-transformer'
 
 @Injectable()

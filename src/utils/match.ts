@@ -1,5 +1,4 @@
 import { TeamScore } from '@prisma/client'
-import { PrismaNestedUsers, TeamUsers } from 'src/types/team'
 
 export interface PrismaTeamWithUsers {
     users: ({
@@ -22,17 +21,6 @@ export interface PrismaTeamWithUsers {
 }
 export function formatTeamUsers(team: PrismaTeamWithUsers) {
     return { ...team, users: team.users.map((user) => user.user) }
-}
-
-export function flattenTeamUsersArray(prismaUsers: PrismaNestedUsers[]): TeamUsers[] {
-    const test = prismaUsers.map((user) => {
-        return {
-            ...user,
-            user: { ...user.user },
-        }
-    })
-    console.log(test)
-    return []
 }
 
 export function getTeamScoreByMatch(matchId: string, scores: TeamScore[]): number {
