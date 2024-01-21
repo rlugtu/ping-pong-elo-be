@@ -2,7 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Headers } from '@nes
 import { MatchService } from './match.service'
 import { CreateMatchDto } from './dto/create-match.dto'
 import { JoinMatchDto, UpdateMatchDto, UpdateMatchScoreDto } from './dto/update-match.dto'
-import { Match } from '@prisma/client'
+import { MatchState } from '@prisma/client'
 import { parseBearerToken } from 'src/utils/util'
 import { FormattedMatch } from './entities/match.entity'
 
@@ -14,6 +14,13 @@ export class MatchController {
     create(@Body() createMatchDto: CreateMatchDto) {
         try {
             return this.matchService.create(createMatchDto)
+        } catch (error) {}
+    }
+
+    @Get('state/:matchState')
+    async findByState(@Param('matchState') matchState: MatchState): Promise<FormattedMatch[]> {
+        try {
+            return this.matchService.findAllByState(matchState)
         } catch (error) {}
     }
 
@@ -32,11 +39,6 @@ export class MatchController {
             const authToken = parseBearerToken(token)
             return this.matchService.getUserCurrentMatches(authToken)
         } catch (error) {}
-    }
-
-    @Get()
-    findAll() {
-        return this.matchService.findAll()
     }
 
     @Get(':id')

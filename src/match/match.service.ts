@@ -4,7 +4,7 @@ import { JoinMatchDto, UpdateMatchDto, UpdateMatchScoreDto } from './dto/update-
 import { PrismaService } from 'src/prisma/prisma.service'
 import { UsersService } from 'src/users/users.service'
 import { TeamService } from 'src/team/team.service'
-import { Match } from '@prisma/client'
+import { MatchState } from '@prisma/client'
 import { formatTeamUsers, getTeamScoreByMatch } from 'src/utils/match'
 import { FormattedMatch, MatchTeam } from './entities/match.entity'
 import { plainToClass } from 'class-transformer'
@@ -91,23 +91,29 @@ export class MatchService {
             },
         })
 
+        return this.findAllByState('IN_PROGRESS', user.id)
+    }
+
+    async findAllByState(state: MatchState, filterByUserId?: string): Promise<FormattedMatch[]> {
         const matches = await this.prisma.match.findMany({
             where: {
-                state: 'IN_PROGRESS',
-                teamA: {
-                    users: {
-                        some: {
-                            userId: user.id,
+                state,
+                ...(filterByUserId && {
+                    teamA: {
+                        users: {
+                            some: {
+                                userId: filterByUserId,
+                            },
                         },
                     },
-                },
-                teamB: {
-                    users: {
-                        some: {
-                            userId: user.id,
+                    teamB: {
+                        users: {
+                            some: {
+                                userId: filterByUserId,
+                            },
                         },
                     },
-                },
+                }),
             },
             include: {
                 teamA: {
@@ -153,10 +159,6 @@ export class MatchService {
         })
 
         return formattedMatch
-    }
-
-    findAll() {
-        return `This action returns all match`
     }
 
     async findOne(matchId: string): Promise<FormattedMatch> {
