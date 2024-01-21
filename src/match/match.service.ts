@@ -5,7 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service'
 import { UsersService } from 'src/users/users.service'
 import { TeamService } from 'src/team/team.service'
 import { Match } from '@prisma/client'
-import { formatTeamUsers } from 'src/utils/match'
+import { formatTeamUsers, getTeamScoreByMatch } from 'src/utils/match'
 import { FormattedMatch, MatchTeam } from './entities/match.entity'
 import { plainToClass } from 'class-transformer'
 
@@ -84,7 +84,7 @@ export class MatchService {
         return formattedLobbies
     }
 
-    async getUserCurrentMatches(token: string): Promise<Match[]> {
+    async getUserCurrentMatches(token: string): Promise<FormattedMatch[]> {
         const user = await this.prisma.user.findFirst({
             where: {
                 accessToken: token,
@@ -117,6 +117,8 @@ export class MatchService {
                                 user: true,
                             },
                         },
+                        eloHistory: true,
+                        score: true,
                     },
                 },
                 teamB: {
@@ -126,22 +128,31 @@ export class MatchService {
                                 user: true,
                             },
                         },
+                        eloHistory: true,
+                        score: true,
                     },
                 },
             },
         })
 
-        return matches.map((match) => {
-            return {
+        const formattedMatch = matches.map((match) => {
+            return plainToClass(FormattedMatch, {
                 ...match,
-                teamA: formatTeamUsers(match.teamA),
-                teamB: formatTeamUsers(match.teamB),
-            }
-        })
-    }
+                teamA: {
+                    ...formatTeamUsers(match.teamA),
+                    score: getTeamScoreByMatch(match.id, match.teamA.score),
+                    elo: match.teamA.eloHistory[0].elo,
+                },
 
-    async updateScore(matchId: string): Promise<Match> {
-        return
+                teamB: {
+                    ...formatTeamUsers(match.teamB),
+                    score: getTeamScoreByMatch(match.id, match.teamB.score),
+                    elo: match.teamB.eloHistory[0].elo,
+                },
+            })
+        })
+
+        return formattedMatch
     }
 
     findAll() {
@@ -223,23 +234,23 @@ export class MatchService {
     async updateMatchScore(matchId: string, scoreData: UpdateMatchScoreDto): Promise<void> {
         const { score, teamId } = scoreData
 
-        // const match = await this.prisma.match.findFirst({
-        //     where: {
-        //         id: matchId,
-        //     },
-        // })
+        const match = await this.prisma.match.findFirst({
+            where: {
+                id: matchId,
+            },
+        })
 
-        // // Check if win condition has been reached
-        // if (scoreData.score >= match.winningScore) {
-        //     await this.prisma.match.update({
-        //         where: {
-        //             id: matchId,
-        //         },
-        //         data: {
-        //             state: 'COMPLETED',
-        //         },
-        //     })
-        // }
+        // Check if win condition has been reached
+        if (scoreData.score >= match.winningScore) {
+            await this.prisma.match.update({
+                where: {
+                    id: matchId,
+                },
+                data: {
+                    state: 'COMPLETED',
+                },
+            })
+        }
 
         await this.prisma.teamScore.update({
             where: {
