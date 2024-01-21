@@ -64,7 +64,7 @@ export class UsersService {
 
         const soloTeam = await this.teamService.findOrCreateTeam([id])
 
-        const res = plainToClass(UserEntity, { ...user, ...soloTeam })
+        const res = plainToClass(UserEntity, { ...soloTeam, ...user })
         return res
     }
 

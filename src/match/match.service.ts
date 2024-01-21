@@ -84,10 +84,10 @@ export class MatchService {
         return formattedLobbies
     }
 
-    async getUserCurrentMatches(token: string): Promise<FormattedMatch[]> {
-        const user = await this.prisma.user.findFirst({
+    async getUserCurrentMatches(id: string): Promise<FormattedMatch[]> {
+        const user = await this.prisma.user.findFirstOrThrow({
             where: {
-                accessToken: token,
+                id,
             },
         })
 

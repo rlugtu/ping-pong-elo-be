@@ -31,13 +31,10 @@ export class MatchController {
         } catch (error) {}
     }
 
-    @Get('in-progress')
-    async getUserCurrentMatches(
-        @Headers('authorization') token: string,
-    ): Promise<FormattedMatch[]> {
+    @Get('in-progress/user/:userId')
+    async getUserCurrentMatches(@Param('userId') userId: string): Promise<FormattedMatch[]> {
         try {
-            const authToken = parseBearerToken(token)
-            return this.matchService.getUserCurrentMatches(authToken)
+            return this.matchService.getUserCurrentMatches(userId)
         } catch (error) {}
     }
 
