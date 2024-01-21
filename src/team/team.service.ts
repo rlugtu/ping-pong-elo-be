@@ -3,6 +3,10 @@ import { CreateTeamDto } from './dto/create-team.dto'
 import { UpdateTeamDto } from './dto/update-team.dto'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { Team } from '@prisma/client'
+import { Team as FormattedTeam } from './entities/team.entity'
+import { TeamQueryParams } from 'src/types/team'
+import { flattenTeamUsersArray } from 'src/utils/match'
+import { plainToClass } from 'class-transformer'
 
 @Injectable()
 export class TeamService {
@@ -11,8 +15,38 @@ export class TeamService {
         return 'This action adds a new team'
     }
 
-    findAll() {
-        return `This action returns all team`
+    async findAll(qp: TeamQueryParams) {
+        const teams = await this.prisma.team.findMany({
+            ...(qp.limit && { take: +qp.limit }),
+            where: {},
+            include: {
+                users: {
+                    include: {
+                        user: true,
+                    },
+                },
+                eloHistory: {
+                    orderBy: {
+                        createdAt: 'asc',
+                    },
+                },
+            },
+        })
+
+        const filteredTeams = teams.filter((team) => {
+            const teamSize = qp.matchMode === 'SINGLES' ? 1 : 2
+            return team.users.length === teamSize
+        })
+
+        const flattenedUsers = filteredTeams.map((team) => {
+            return plainToClass(FormattedTeam, {
+                ...team,
+                users: team.users.map((user) => user.user),
+                elo: team.eloHistory[0].elo,
+            })
+        })
+
+        return flattenedUsers
     }
 
     findOne(id: number) {

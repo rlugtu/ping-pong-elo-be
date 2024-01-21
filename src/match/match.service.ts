@@ -189,8 +189,6 @@ export class MatchService {
             },
         })
 
-        console.log(match)
-
         // if (match.teamScores.length < 2) {
         //     throw new NotFoundException('Teams for match not found')
         // }
