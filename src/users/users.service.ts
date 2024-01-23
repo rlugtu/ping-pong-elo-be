@@ -5,7 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service'
 import { plainToClass } from 'class-transformer'
 import { UserEntity } from './entities/user.entity'
 import { getTeamCurrentElo } from 'src/utils/team'
-import { formatTeamUsers } from 'src/utils/match'
+import { flattenPrismaTeamUsers } from 'src/utils/match'
 import { Team } from 'src/team/entities/team.entity'
 
 @Injectable()
@@ -76,7 +76,7 @@ export class UsersService {
         })
         const formattedDuoTeams = duoTeams.map((team) => {
             return plainToClass(Team, {
-                ...formatTeamUsers(team.team),
+                ...flattenPrismaTeamUsers(team.team),
                 elo: getTeamCurrentElo(team.team),
             })
         })

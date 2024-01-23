@@ -7,7 +7,8 @@ import { MatchState } from '@prisma/client'
 
 import { FormattedMatch, FormattedMatchTeam } from './entities/match.entity'
 import { plainToClass } from 'class-transformer'
-import { convertPrismaMatchTeamToFormattedMatchTeam } from 'src/utils/match'
+import { convertPrismaMatchTeamToFormattedMatchTeam, flattenPrismaTeamUsers } from 'src/utils/match'
+import { getTeamCurrentElo } from 'src/utils/team'
 
 @Injectable()
 export class MatchService {
@@ -196,8 +197,8 @@ export class MatchService {
         const teamA = plainToClass(FormattedMatchTeam, {
             ...teamAInfo.team,
             score: teamAInfo.score,
-            users: teamAInfo.team.users.map((user) => user.user),
-            elo: teamAInfo.team.eloHistory[0].elo,
+            users: flattenPrismaTeamUsers(teamAInfo.team),
+            elo: getTeamCurrentElo(teamAInfo.team),
         })
 
         // Add Error handling if filter returns []
@@ -208,17 +209,15 @@ export class MatchService {
         const teamB = plainToClass(FormattedMatchTeam, {
             ...teamBInfo.team,
             score: teamBInfo.score,
-            users: teamBInfo.team.users.map((user) => user.user),
-            elo: teamBInfo.team.eloHistory[0].elo,
+            users: flattenPrismaTeamUsers(teamBInfo.team),
+            elo: getTeamCurrentElo(teamBInfo.team),
         })
 
-        const formatted = {
+        return plainToClass(FormattedMatch, {
             ...match,
             teamA,
             teamB,
-        }
-
-        return plainToClass(FormattedMatch, formatted)
+        })
     }
 
     async updateMatchScore(matchId: string, scoreData: UpdateMatchScoreDto): Promise<void> {

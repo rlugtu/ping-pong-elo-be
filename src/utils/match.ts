@@ -5,13 +5,13 @@ import { PrismaTeamMatchInfo } from 'src/types/match'
 import { PrismaTeamWithUsers } from 'src/types/team'
 import { getTeamCurrentElo } from './team'
 
-export function formatTeamUsers(team: PrismaTeamWithUsers): User[] {
+export function flattenPrismaTeamUsers(team: PrismaTeamWithUsers): User[] {
     return team.users.map((user) => user.user)
 }
 
-export function getTeamScoreByMatch(matchId: string, scores: TeamScore[]): number {
+export function getTeamScoreByMatch(matchId: string, teamId: string, scores: TeamScore[]): number {
     const score = scores.find((score) => {
-        return score.matchId === matchId
+        return score.matchId === matchId && score.teamId === teamId
     })
 
     if (!score) {
@@ -27,8 +27,8 @@ export function convertPrismaMatchTeamToFormattedMatchTeam(
 ) {
     return plainToClass(FormattedMatchTeam, {
         ...team,
-        users: formatTeamUsers(team),
-        score: getTeamScoreByMatch(matchId, team.score),
+        users: flattenPrismaTeamUsers(team),
+        score: getTeamScoreByMatch(matchId, team.id, team.score),
         elo: getTeamCurrentElo(team),
     })
 }
