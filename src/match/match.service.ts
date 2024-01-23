@@ -282,6 +282,12 @@ export class MatchService {
                         id: teamToJoin.id,
                     },
                 },
+                teamScores: {
+                    create: {
+                        teamId: teamToJoin.id,
+                        score: 0,
+                    },
+                },
                 state: 'IN_PROGRESS',
             },
         })
