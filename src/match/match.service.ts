@@ -103,20 +103,26 @@ export class MatchService {
             where: {
                 state,
                 ...(filterByUserId && {
-                    teamA: {
-                        users: {
-                            some: {
-                                userId: filterByUserId,
+                    OR: [
+                        {
+                            teamA: {
+                                users: {
+                                    some: {
+                                        userId: filterByUserId,
+                                    },
+                                },
                             },
                         },
-                    },
-                    teamB: {
-                        users: {
-                            some: {
-                                userId: filterByUserId,
+                        {
+                            teamB: {
+                                users: {
+                                    some: {
+                                        userId: filterByUserId,
+                                    },
+                                },
                             },
                         },
-                    },
+                    ],
                 }),
             },
             include: {
