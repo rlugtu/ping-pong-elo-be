@@ -1,4 +1,5 @@
-import { PrismaTeamWithElo } from 'src/types/team'
+import { User } from '@prisma/client'
+import { PrismaTeamWithElo, PrismaTeamWithUsers } from 'src/types/team'
 
 export function getTeamCurrentElo(team: PrismaTeamWithElo): number {
     if (!team.eloHistory.length) {
@@ -6,4 +7,8 @@ export function getTeamCurrentElo(team: PrismaTeamWithElo): number {
     }
 
     return team.eloHistory?.[0].elo
+}
+
+export function flattenPrismaTeamUsers(team: PrismaTeamWithUsers): User[] {
+    return team.users.map((user) => user.user)
 }

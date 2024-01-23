@@ -1,13 +1,8 @@
-import { TeamScore, User } from '@prisma/client'
+import { TeamScore } from '@prisma/client'
 import { plainToClass } from 'class-transformer'
 import { FormattedMatchTeam } from 'src/match/entities/match.entity'
 import { PrismaTeamMatchInfo } from 'src/types/match'
-import { PrismaTeamWithUsers } from 'src/types/team'
-import { getTeamCurrentElo } from './team'
-
-export function flattenPrismaTeamUsers(team: PrismaTeamWithUsers): User[] {
-    return team.users.map((user) => user.user)
-}
+import { flattenPrismaTeamUsers, getTeamCurrentElo } from './team'
 
 export function getTeamScoreByMatch(matchId: string, teamId: string, scores: TeamScore[]): number {
     const score = scores.find((score) => {

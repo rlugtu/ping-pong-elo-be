@@ -4,8 +4,7 @@ import { UpdateUserDto } from './dto/update-user.dto'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { plainToClass } from 'class-transformer'
 import { UserEntity } from './entities/user.entity'
-import { getTeamCurrentElo } from 'src/utils/team'
-import { flattenPrismaTeamUsers } from 'src/utils/match'
+import { flattenPrismaTeamUsers, getTeamCurrentElo } from 'src/utils/team'
 import { Team } from 'src/team/entities/team.entity'
 
 @Injectable()

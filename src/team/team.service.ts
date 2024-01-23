@@ -6,6 +6,7 @@ import { Team } from '@prisma/client'
 import { Team as FormattedTeam } from './entities/team.entity'
 import { plainToClass } from 'class-transformer'
 import { TeamQueryParams } from './dto/query-param.dto'
+import { flattenPrismaTeamUsers } from 'src/utils/team'
 
 @Injectable()
 export class TeamService {
@@ -40,7 +41,7 @@ export class TeamService {
         const flattenedUsers = filteredTeams.map((team) => {
             return plainToClass(FormattedTeam, {
                 ...team,
-                users: team.users.map((user) => user.user),
+                users: flattenPrismaTeamUsers(team),
                 elo: team.eloHistory[0].elo,
             })
         })

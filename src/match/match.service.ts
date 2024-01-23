@@ -7,8 +7,8 @@ import { MatchState } from '@prisma/client'
 
 import { FormattedMatch, FormattedMatchTeam } from './entities/match.entity'
 import { plainToClass } from 'class-transformer'
-import { convertPrismaMatchTeamToFormattedMatchTeam, flattenPrismaTeamUsers } from 'src/utils/match'
-import { getTeamCurrentElo } from 'src/utils/team'
+import { convertPrismaMatchTeamToFormattedMatchTeam } from 'src/utils/match'
+import { flattenPrismaTeamUsers, getTeamCurrentElo } from 'src/utils/team'
 
 @Injectable()
 export class MatchService {
