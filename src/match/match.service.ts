@@ -67,6 +67,7 @@ export class MatchService {
             },
         })
 
+        // Need to make entity for lobby
         const formattedLobbies = lobbies.map((lobby) => {
             return {
                 ...lobby,
@@ -191,9 +192,6 @@ export class MatchService {
             (teamScore) => teamScore.teamId === match.teamAId,
         )[0]
 
-        if (!teamAInfo) {
-            throw new Error('not found')
-        }
         const teamA = plainToClass(FormattedMatchTeam, {
             ...teamAInfo.team,
             score: teamAInfo.score,
