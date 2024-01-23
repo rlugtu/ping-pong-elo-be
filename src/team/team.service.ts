@@ -88,6 +88,7 @@ export class TeamService {
                 return userIds.includes(user.userId) && team.users.length === userIds.length
             })
         })
+        foundTeam.forEach((team) => team.users.forEach((user) => console.log(user.userId)))
 
         console.log({ foundTeam: foundTeam.length })
 
