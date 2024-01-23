@@ -95,7 +95,10 @@ export class MatchService {
         return this.findAllByState('IN_PROGRESS', user.id)
     }
 
-    async findAllByState(state: MatchState, filterByUserId?: string): Promise<FormattedMatch[]> {
+    async findAllByState(
+        state: MatchState,
+        filterByUserId: string = '',
+    ): Promise<FormattedMatch[]> {
         const matches = await this.prisma.match.findMany({
             where: {
                 state,
