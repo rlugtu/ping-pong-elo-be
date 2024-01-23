@@ -111,7 +111,10 @@ export class TeamService {
 
         if (foundTeam.length > 1) {
             // Temporary error just for development
-            throw new Error('found more than one team for the associated ids')
+
+            throw new Error(
+                `found more than one team for the associated ids ${foundTeam.length}, ${foundTeam[0].users[0].userId}, ${foundTeam[1].users[1].userId}`,
+            )
         }
 
         return foundTeam[0]
