@@ -16,7 +16,7 @@ export class UsersService {
             data: { ...createUserDto, accessToken },
         })
 
-        this.prisma.team.create({
+        const userSoloTeam = await this.prisma.team.create({
             data: {
                 users: {
                     create: {
