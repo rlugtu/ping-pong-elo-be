@@ -1,9 +1,5 @@
-import { Elo, Team } from '@prisma/client'
+import { PrismaTeamWithElo } from 'src/types/team'
 
-export function getTeamCurrentElo(
-    team: Team & {
-        eloHistory: Elo[]
-    },
-): number {
+export function getTeamCurrentElo(team: PrismaTeamWithElo): number {
     return team.eloHistory?.[0].elo ?? 0
 }

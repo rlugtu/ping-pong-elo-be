@@ -2,18 +2,17 @@ import { Injectable } from '@nestjs/common'
 import { CreateMatchDto } from './dto/create-match.dto'
 import { JoinMatchDto, UpdateMatchDto, UpdateMatchScoreDto } from './dto/update-match.dto'
 import { PrismaService } from 'src/prisma/prisma.service'
-import { UsersService } from 'src/users/users.service'
 import { TeamService } from 'src/team/team.service'
 import { MatchState } from '@prisma/client'
-import { formatTeamUsers, getTeamScoreByMatch } from 'src/utils/match'
-import { FormattedMatch, MatchTeam } from './entities/match.entity'
+
+import { FormattedMatch, FormattedMatchTeam } from './entities/match.entity'
 import { plainToClass } from 'class-transformer'
+import { convertPrismaMatchTeamToFormattedMatchTeam } from 'src/utils/match'
 
 @Injectable()
 export class MatchService {
     constructor(
         private prisma: PrismaService,
-        private userService: UsersService,
         private teamService: TeamService,
     ) {}
 
@@ -144,17 +143,8 @@ export class MatchService {
         const formattedMatch = matches.map((match) => {
             return plainToClass(FormattedMatch, {
                 ...match,
-                teamA: {
-                    ...formatTeamUsers(match.teamA),
-                    score: getTeamScoreByMatch(match.id, match.teamA.score),
-                    elo: match.teamA.eloHistory[0].elo,
-                },
-
-                teamB: {
-                    ...formatTeamUsers(match.teamB),
-                    score: getTeamScoreByMatch(match.id, match.teamB.score),
-                    elo: match.teamB.eloHistory[0].elo,
-                },
+                teamA: convertPrismaMatchTeamToFormattedMatchTeam(match.id, match.teamA),
+                teamB: convertPrismaMatchTeamToFormattedMatchTeam(match.id, match.teamB),
             })
         })
 
@@ -203,7 +193,7 @@ export class MatchService {
         if (!teamAInfo) {
             throw new Error('not found')
         }
-        const teamA = plainToClass(MatchTeam, {
+        const teamA = plainToClass(FormattedMatchTeam, {
             ...teamAInfo.team,
             score: teamAInfo.score,
             users: teamAInfo.team.users.map((user) => user.user),
@@ -215,7 +205,7 @@ export class MatchService {
             (teamScore) => teamScore.teamId === match.teamBId,
         )[0]
 
-        const teamB = plainToClass(MatchTeam, {
+        const teamB = plainToClass(FormattedMatchTeam, {
             ...teamBInfo.team,
             score: teamBInfo.score,
             users: teamBInfo.team.users.map((user) => user.user),

@@ -1,7 +1,11 @@
-import { MatchMode } from '@prisma/client'
+import { Elo, Team, User, UserTeams } from '@prisma/client'
 
-export interface TeamQueryParams {
-    matchMode: MatchMode
-    sort?: 'asc' | 'desc'
-    limit?: number
+export type PrismaTeamWithUsers = Team & {
+    users: ({
+        user: User
+    } & UserTeams)[]
+}
+
+export type PrismaTeamWithElo = Team & {
+    eloHistory: Elo[]
 }

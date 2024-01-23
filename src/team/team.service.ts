@@ -4,8 +4,8 @@ import { UpdateTeamDto } from './dto/update-team.dto'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { Team } from '@prisma/client'
 import { Team as FormattedTeam } from './entities/team.entity'
-import { TeamQueryParams } from 'src/types/team'
 import { plainToClass } from 'class-transformer'
+import { TeamQueryParams } from './dto/query-param.dto'
 
 @Injectable()
 export class TeamService {
@@ -16,7 +16,7 @@ export class TeamService {
 
     async findAll(qp: TeamQueryParams) {
         const teams = await this.prisma.team.findMany({
-            ...(qp.limit && { take: +qp.limit }),
+            ...(qp.limit && { take: qp.limit }),
             where: {},
             include: {
                 users: {
@@ -26,7 +26,7 @@ export class TeamService {
                 },
                 eloHistory: {
                     orderBy: {
-                        createdAt: 'asc',
+                        createdAt: 'desc',
                     },
                 },
             },

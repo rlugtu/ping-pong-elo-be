@@ -7,8 +7,8 @@ export class FormattedMatch {
     createdAt: Date
     mode: MatchMode
     state: MatchState
-    teamA: MatchTeam
-    teamB: MatchTeam
+    teamA: FormattedMatchTeam
+    teamB: FormattedMatchTeam
     winningScore: MatchWinningScore
 
     @Exclude()
@@ -23,7 +23,7 @@ export class FormattedMatch {
     teamScores: TeamScore[]
 }
 
-export class MatchTeam {
+export class FormattedMatchTeam {
     id: string
     elo: number
     createdAt: Date
