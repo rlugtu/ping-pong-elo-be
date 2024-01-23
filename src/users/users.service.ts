@@ -46,7 +46,7 @@ export class UsersService {
     }
 
     async findOne(id: string, accessToken: string): Promise<UserEntity> {
-        const user = await this.prisma.user.findFirst({
+        const user = await this.prisma.user.findFirstOrThrow({
             where: {
                 id,
             },
@@ -66,6 +66,7 @@ export class UsersService {
         const soloTeam = await this.teamService.findOrCreateTeam([id])
 
         const res = plainToClass(UserEntity, { ...soloTeam, ...user })
+
         return res
     }
 

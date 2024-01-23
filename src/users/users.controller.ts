@@ -15,7 +15,7 @@ export class UsersController {
 
             return this.usersService.create(createUserDto, accessToken)
         } catch (error) {
-            console.log(error)
+            console.log('create error:', error)
         }
     }
 
