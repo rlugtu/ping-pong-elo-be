@@ -108,7 +108,9 @@ export class MatchService {
                             teamA: {
                                 users: {
                                     some: {
-                                        userId: filterByUserId,
+                                        userId: {
+                                            equals: filterByUserId,
+                                        },
                                     },
                                 },
                             },
@@ -117,7 +119,9 @@ export class MatchService {
                             teamB: {
                                 users: {
                                     some: {
-                                        userId: filterByUserId,
+                                        userId: {
+                                            equals: filterByUserId,
+                                        },
                                     },
                                 },
                             },
