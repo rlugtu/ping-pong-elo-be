@@ -5,6 +5,7 @@ import { PrismaTeamMatchInfo } from 'src/types/match'
 import { flattenPrismaTeamUsers, getTeamCurrentElo } from './team'
 
 export function getTeamScoreByMatch(matchId: string, teamId: string, scores: TeamScore[]): number {
+    console.log('getting score', matchId, teamId, scores.length)
     const score = scores.find((score) => {
         return score.matchId === matchId && score.teamId === teamId
     })
