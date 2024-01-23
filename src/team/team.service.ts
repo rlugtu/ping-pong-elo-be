@@ -89,6 +89,8 @@ export class TeamService {
             })
         })
 
+        console.log({ foundTeam: foundTeam.length })
+
         if (!foundTeam.length) {
             return await this.prisma.team.create({
                 data: {
