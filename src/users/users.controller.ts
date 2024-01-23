@@ -25,10 +25,9 @@ export class UsersController {
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string, @Headers('authorization') accessToken: string) {
+    findOne(@Param('id') id: string) {
         try {
-            accessToken = parseBearerToken(accessToken)
-            return this.usersService.findOne(id, accessToken)
+            return this.usersService.findOne(id)
         } catch (error) {
             console.log(error)
             // console.log({ error, id, accessToken })

@@ -1,6 +1,6 @@
-import { TeamScore } from '@prisma/client'
+import { Team, TeamScore } from '@prisma/client'
 
-export interface PrismaTeamWithUsers {
+export type PrismaTeamWithUsers = Team & {
     users: ({
         user: {
             id: string

@@ -1,3 +1,4 @@
+import { Team } from '@prisma/client'
 import { Exclude } from 'class-transformer'
 
 export class UserEntity {
@@ -6,6 +7,7 @@ export class UserEntity {
     elo: number
     department: string
     email: string
+    teams: Team[]
 
     @Exclude()
     accessToken: string

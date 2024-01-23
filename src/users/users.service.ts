@@ -5,6 +5,9 @@ import { PrismaService } from 'src/prisma/prisma.service'
 import { plainToClass } from 'class-transformer'
 import { UserEntity } from './entities/user.entity'
 import { TeamService } from 'src/team/team.service'
+import { getTeamCurrentElo } from 'src/utils/team'
+import { formatTeamUsers } from 'src/utils/match'
+import { Team } from 'src/team/entities/team.entity'
 
 @Injectable()
 export class UsersService {
@@ -45,27 +48,47 @@ export class UsersService {
         return `This action returns all users`
     }
 
-    async findOne(id: string, accessToken: string): Promise<UserEntity> {
+    async findOne(id: string): Promise<UserEntity> {
         const user = await this.prisma.user.findFirstOrThrow({
             where: {
                 id,
             },
+            include: {
+                teams: {
+                    include: {
+                        team: {
+                            include: {
+                                eloHistory: true,
+                                users: {
+                                    include: {
+                                        user: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
         })
 
-        if (user) {
-            await this.prisma.user.update({
-                where: {
-                    id,
-                },
-                data: {
-                    accessToken,
-                },
+        const soloTeam = user.teams.find((team) => {
+            return team.team.users.length === 1
+        })
+
+        const soloElo = soloTeam.team.eloHistory[0].elo
+
+        const duoTeams = user.teams.filter((team) => {
+            return team.team.users.length > 1
+        })
+
+        const formattedDuoTeams = duoTeams.map((team) => {
+            return plainToClass(Team, {
+                ...formatTeamUsers(team.team),
+                elo: getTeamCurrentElo(team.team),
             })
-        }
+        })
 
-        const soloTeam = await this.teamService.findOrCreateTeam([id])
-
-        const res = plainToClass(UserEntity, { ...soloTeam, ...user })
+        const res = plainToClass(UserEntity, { ...user, elo: soloElo, teams: formattedDuoTeams })
 
         return res
     }
