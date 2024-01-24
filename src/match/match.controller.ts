@@ -1,9 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Headers } from '@nestjs/common'
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common'
 import { MatchService } from './match.service'
 import { CreateMatchDto } from './dto/create-match.dto'
 import { JoinMatchDto, UpdateMatchDto, UpdateMatchScoreDto } from './dto/update-match.dto'
 import { MatchState } from '@prisma/client'
-import { parseBearerToken } from 'src/utils/util'
 import { FormattedMatch } from './entities/match.entity'
 
 @Controller('match')

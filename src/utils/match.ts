@@ -6,14 +6,6 @@ import { flattenPrismaTeamUsers, getTeamCurrentElo } from './team'
 
 export function getTeamScoreByMatch(matchId: string, teamId: string, scores: TeamScore[]): number {
     const score = scores.find((score) => {
-        console.log(
-            'comparing',
-            matchId,
-            score.matchId,
-            teamId,
-            score.teamId,
-            score.matchId === matchId && score.teamId === teamId,
-        )
         return score.matchId === matchId && score.teamId === teamId
     })
 
