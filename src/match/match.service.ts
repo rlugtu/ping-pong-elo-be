@@ -232,7 +232,7 @@ export class MatchService {
     }
 
     async updateMatchScore(matchId: string, scoreData: UpdateMatchScoreDto): Promise<void> {
-        const { score, teamId } = scoreData
+        const { teamA, teamB } = scoreData
 
         const match = await this.prisma.match.findFirst({
             where: {
@@ -240,8 +240,24 @@ export class MatchService {
             },
         })
 
+        const teamScores = [teamA, teamB].map((team) => {
+            return this.prisma.teamScore.update({
+                where: {
+                    teamIdMatchId: {
+                        teamId: team.id,
+                        matchId,
+                    },
+                },
+                data: {
+                    score: team.score,
+                },
+            })
+        })
+
+        await Promise.all(teamScores)
+
         // Check if win condition has been reached
-        if (scoreData.score >= match.winningScore) {
+        if (teamA.score >= match.winningScore || teamB.score >= match.winningScore) {
             await this.prisma.match.update({
                 where: {
                     id: matchId,
@@ -251,18 +267,6 @@ export class MatchService {
                 },
             })
         }
-
-        await this.prisma.teamScore.update({
-            where: {
-                teamIdMatchId: {
-                    teamId,
-                    matchId,
-                },
-            },
-            data: {
-                score,
-            },
-        })
     }
 
     update(id: number, updateMatchDto: UpdateMatchDto) {

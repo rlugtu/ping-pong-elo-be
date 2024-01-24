@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types'
 import { CreateMatchDto } from './create-match.dto'
-import { ArrayMinSize, IsArray, IsNumber, IsString } from 'class-validator'
+import { ArrayMinSize, IsArray, IsNotEmpty, IsNumber, IsString } from 'class-validator'
 
 export class UpdateMatchDto extends PartialType(CreateMatchDto) {}
 
@@ -10,10 +10,18 @@ export class JoinMatchDto {
     teamB: string[]
 }
 
-export class UpdateMatchScoreDto {
+export class TeamScoreDto {
     @IsString()
-    teamId: string
+    id: string
 
     @IsNumber()
     score: number
+}
+
+export class UpdateMatchScoreDto {
+    @IsNotEmpty()
+    teamA: TeamScoreDto
+
+    @IsNotEmpty()
+    teamB: TeamScoreDto
 }

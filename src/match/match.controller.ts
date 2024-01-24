@@ -48,6 +48,7 @@ export class MatchController {
     @Patch(':id/score')
     async updateMatchScore(@Param('id') id: string, @Body() scoreData: UpdateMatchScoreDto) {
         try {
+            console.log('hiii', scoreData)
             return await this.matchService.updateMatchScore(id, scoreData)
         } catch (error) {
             console.log({ error })
