@@ -11,29 +11,45 @@ import { Team } from 'src/team/entities/team.entity'
 export class UsersService {
     constructor(private prisma: PrismaService) {}
 
-    async create(createUserDto: CreateUserDto, accessToken: string) {
-        const user = await this.prisma.user.create({
-            data: { ...createUserDto, accessToken },
+    async create(createUserDto: CreateUserDto) {
+        const user = await this.prisma.user.upsert({
+            where: {
+                id: createUserDto.id,
+            },
+            update: {
+                ...createUserDto,
+                accessToken: '',
+            },
+            create: {
+                ...createUserDto,
+                accessToken: '',
+            },
+            include: {
+                teams: true,
+            },
         })
 
-        const userSoloTeam = await this.prisma.team.create({
-            data: {
-                users: {
-                    create: {
-                        user: {
-                            connect: {
-                                id: user.id,
+        if (user.teams && !user.teams.length) {
+            console.log('New User Found. Creating Solo Team')
+            await this.prisma.team.create({
+                data: {
+                    users: {
+                        create: {
+                            user: {
+                                connect: {
+                                    id: user.id,
+                                },
                             },
                         },
                     },
-                },
-                eloHistory: {
-                    create: {
-                        elo: 1400,
+                    eloHistory: {
+                        create: {
+                            elo: 1400,
+                        },
                     },
                 },
-            },
-        })
+            })
+        }
 
         return user
     }

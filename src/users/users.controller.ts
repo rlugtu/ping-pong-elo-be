@@ -1,19 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Headers } from '@nestjs/common'
+import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common'
 import { UsersService } from './users.service'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
-import { parseBearerToken } from 'src/utils/util'
 
 @Controller('users')
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
 
     @Post()
-    create(@Body() createUserDto: CreateUserDto, @Headers('authorization') accessToken: string) {
+    create(@Body() createUserDto: CreateUserDto) {
         try {
-            accessToken = parseBearerToken(accessToken)
-
-            return this.usersService.create(createUserDto, accessToken)
+            return this.usersService.create(createUserDto)
         } catch (error) {
             console.log('create error:', error)
         }
