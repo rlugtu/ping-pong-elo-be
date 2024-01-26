@@ -8,9 +8,9 @@ export type PrismaTeamMatchInfo = PrismaTeamWithUsers &
         score: TeamScore[]
     }
 
-// Web Socket Types
 export type SocketMatchTeamScore = {
-    [roomId: string]: {
+    matchId: string
+    scores: {
         [teamId: string]: number
     }
 }
