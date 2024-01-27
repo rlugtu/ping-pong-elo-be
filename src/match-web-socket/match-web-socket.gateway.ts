@@ -4,7 +4,7 @@ import {
     WebSocketGateway,
     WebSocketServer,
 } from '@nestjs/websockets'
-import { Socket, Server } from 'socket.io'
+import { Server } from 'socket.io'
 import { FormattedLobby } from 'src/match/entities/match.entity'
 import { MatchService } from 'src/match/match.service'
 import { SocketMatchTeamScore } from 'src/types/match'
@@ -14,7 +14,6 @@ type lobbies = FormattedLobby[]
 
 @WebSocketGateway({ cors: true })
 export class MatchWebSocketGateway {
-    private socket: Socket
     public matchRooms: MatchRoomMap = new Map()
     public lobbies: lobbies = []
 
@@ -36,12 +35,17 @@ export class MatchWebSocketGateway {
 
         const matchRoomExists = this.matchRooms.get(matchId)
         if (!matchRoomExists) {
-            this.requestInitialMatchScore({
-                matchId,
-            })
+            const foundMatch = await this.matchService.findOne(matchId)
+
+            const scores = {
+                [foundMatch.teamA.id]: foundMatch.teamA.score,
+                [foundMatch.teamB.id]: foundMatch.teamB.score,
+            }
+
+            this.matchRooms.set(matchId, scores)
         } else {
             const scores = this.matchRooms.get(matchId)
-            this.setAndSendMatchScores({
+            this.setAndSendScoresToMatchClients({
                 matchId,
                 scores,
             })
@@ -51,19 +55,10 @@ export class MatchWebSocketGateway {
         console.log(`${payload.socketId} joined. Total Sockets in room: ${roomSize.length}`)
     }
 
-    requestInitialMatchScore(
-        @MessageBody()
-        payload: {
-            matchId: string
-        },
-    ) {
-        this.server.to(payload.matchId).emit('initialMatchScoreRequest', payload.matchId)
-    }
-
     @SubscribeMessage('matchScoreUpdateEvent')
-    async setAndSendMatchScores(@MessageBody() payload: SocketMatchTeamScore) {
+    async setAndSendScoresToMatchClients(@MessageBody() payload: SocketMatchTeamScore) {
         const { matchId, scores } = payload
-        // console.log('updatedScore', scores)
+
         this.matchRooms.set(matchId, scores)
         this.server.to(matchId).emit('matchScoreUpdated', {
             matchId,

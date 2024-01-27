@@ -18,26 +18,28 @@ export class MatchService {
     ) {}
 
     async create(createMatchDto: CreateMatchDto) {
-        const teamToJoin = await this.teamService.findOrCreateTeam(createMatchDto.teamA)
+        try {
+            const teamToJoin = await this.teamService.findOrCreateTeam(createMatchDto.teamA)
 
-        const match = this.prisma.match.create({
-            data: {
-                ...createMatchDto,
-                teamA: {
-                    connect: {
-                        id: teamToJoin.id,
+            const match = this.prisma.match.create({
+                data: {
+                    ...createMatchDto,
+                    teamA: {
+                        connect: {
+                            id: teamToJoin.id,
+                        },
+                    },
+                    teamScores: {
+                        create: {
+                            score: 0,
+                            teamId: teamToJoin.id,
+                        },
                     },
                 },
-                teamScores: {
-                    create: {
-                        score: 0,
-                        teamId: teamToJoin.id,
-                    },
-                },
-            },
-        })
+            })
 
-        return match
+            return match
+        } catch (error) {}
     }
 
     async getAllOpenLobbies() {
@@ -289,27 +291,29 @@ export class MatchService {
     }
 
     async joinMatch(id: string, joinMatchDto: JoinMatchDto) {
-        const teamToJoin = await this.teamService.findOrCreateTeam(joinMatchDto.teamB)
+        try {
+            const teamToJoin = await this.teamService.findOrCreateTeam(joinMatchDto.teamB)
 
-        return this.prisma.match.update({
-            where: {
-                id,
-            },
-            data: {
-                teamB: {
-                    connect: {
-                        id: teamToJoin.id,
-                    },
+            return this.prisma.match.update({
+                where: {
+                    id,
                 },
-                teamScores: {
-                    create: {
-                        teamId: teamToJoin.id,
-                        score: 0,
+                data: {
+                    teamB: {
+                        connect: {
+                            id: teamToJoin.id,
+                        },
                     },
+                    teamScores: {
+                        create: {
+                            teamId: teamToJoin.id,
+                            score: 0,
+                        },
+                    },
+                    state: 'IN_PROGRESS',
                 },
-                state: 'IN_PROGRESS',
-            },
-        })
+            })
+        } catch (error) {}
     }
 
     remove(id: number) {
