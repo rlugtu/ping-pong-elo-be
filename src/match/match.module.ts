@@ -8,5 +8,6 @@ import { TeamService } from 'src/team/team.service'
 @Module({
     controllers: [MatchController],
     providers: [MatchService, PrismaService, UsersService, TeamService],
+    exports: [MatchService],
 })
 export class MatchModule {}
