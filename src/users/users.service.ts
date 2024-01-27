@@ -84,19 +84,21 @@ export class UsersService {
         const soloTeam = user.teams.find((team) => {
             return team.team.users.length === 1
         })
+
         const soloElo = soloTeam.team.eloHistory[0].elo
 
-        const duoTeams = user.teams.filter((team) => {
-            return team.team.users.length > 1
-        })
-        const formattedDuoTeams = duoTeams.map((team) => {
+        const formattedDuoTeams = user.teams.map((team) => {
             return plainToClass(Team, {
-                ...flattenPrismaTeamUsers(team.team),
+                ...team.team,
                 elo: getTeamCurrentElo(team.team),
             })
         })
 
-        const res = plainToClass(UserEntity, { ...user, elo: soloElo, teams: formattedDuoTeams })
+        const res = plainToClass(UserEntity, {
+            ...user,
+            elo: soloElo,
+            teams: formattedDuoTeams,
+        })
 
         return res
     }

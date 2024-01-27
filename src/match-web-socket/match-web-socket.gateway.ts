@@ -5,9 +5,11 @@ import {
     WebSocketServer,
 } from '@nestjs/websockets'
 import { Socket, Server } from 'socket.io'
+import { FormattedMatch } from 'src/match/entities/match.entity'
 import { SocketMatchTeamScore } from 'src/types/match'
 
 type MatchRoomMap = Map<string, Record<string, number>>
+type LobbiesMap = Map<string, FormattedMatch>
 
 @WebSocketGateway({ cors: true })
 export class MatchWebSocketGateway {

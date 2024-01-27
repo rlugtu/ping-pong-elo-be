@@ -5,7 +5,7 @@ import { PrismaService } from 'src/prisma/prisma.service'
 import { TeamService } from 'src/team/team.service'
 import { MatchState } from '@prisma/client'
 
-import { FormattedMatch, FormattedMatchTeam } from './entities/match.entity'
+import { FormattedLobby, FormattedMatch, FormattedMatchTeam } from './entities/match.entity'
 import { plainToClass } from 'class-transformer'
 import { convertPrismaMatchTeamToFormattedMatchTeam } from 'src/utils/match'
 import { flattenPrismaTeamUsers, getTeamCurrentElo } from 'src/utils/team'
@@ -53,6 +53,7 @@ export class MatchService {
                                 user: true,
                             },
                         },
+                        eloHistory: true,
                     },
                 },
                 teamB: {
@@ -62,6 +63,7 @@ export class MatchService {
                                 user: true,
                             },
                         },
+                        eloHistory: true,
                     },
                 },
             },
@@ -69,17 +71,30 @@ export class MatchService {
 
         // Need to make entity for lobby
         const formattedLobbies = lobbies.map((lobby) => {
-            return {
+            console.log(lobby.teamA.users[0].user)
+            // return {
+            //     ...lobby,
+            //     teamA: {
+            //         ...lobby.teamA,
+            //         users: lobby.teamA.users.map((user) => user.user),
+            //     },
+            //     teamB: {
+            //         ...lobby.teamB,
+            //         users: lobby.teamB?.users.map((user) => user.user) ?? [],
+            //     },
+            // }
+            return plainToClass(FormattedLobby, {
                 ...lobby,
-                teamA: {
+                teamA: plainToClass(FormattedMatchTeam, {
                     ...lobby.teamA,
                     users: lobby.teamA.users.map((user) => user.user),
-                },
-                teamB: {
+                    elo: getTeamCurrentElo(lobby.teamA),
+                }),
+                teamB: plainToClass(FormattedMatchTeam, {
                     ...lobby.teamB,
-                    users: lobby.teamB?.users.map((user) => user.user) ?? [],
-                },
-            }
+                    users: lobby.teamB?.users?.map((user) => user.user) ?? [],
+                }),
+            })
         })
 
         return formattedLobbies

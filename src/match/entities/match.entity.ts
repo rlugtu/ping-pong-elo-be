@@ -23,6 +23,16 @@ export class FormattedMatch {
     teamScores: TeamScore[]
 }
 
+export class FormattedLobby {
+    id: string
+    createdAt: Date
+    mode: MatchMode
+    state: MatchState
+    teamA: FormattedMatchTeam
+    teamB: FormattedMatchTeam
+    winningScore: MatchWinningScore
+}
+
 export class FormattedMatchTeam {
     id: string
     elo: number
