@@ -10,17 +10,27 @@ import { MatchService } from 'src/match/match.service'
 import { SocketMatchTeamScore } from 'src/types/match'
 
 type MatchRoomMap = Map<string, Record<string, number>>
-type lobbies = FormattedLobby[]
-
 @WebSocketGateway({ cors: true })
 export class MatchWebSocketGateway {
-    public matchRooms: MatchRoomMap = new Map()
-    public lobbies: lobbies = []
+    public matchRoomsById: MatchRoomMap = new Map()
+    public lobbies: FormattedLobby[] = []
+    public socketsByUserId: Map<string, string> = new Map()
 
     @WebSocketServer()
     server: Server
 
     public constructor(private matchService: MatchService) {}
+
+    @SubscribeMessage('newConnection')
+    async saveUserToServer(
+        @MessageBody()
+        payload: {
+            userId: string
+            socketId: string
+        },
+    ) {
+        this.socketsByUserId.set(payload.userId, payload.socketId)
+    }
 
     @SubscribeMessage('joinMatch')
     async handleClientJoinMatchEvent(
@@ -33,7 +43,7 @@ export class MatchWebSocketGateway {
         const { socketId, matchId } = payload
         await this.server.in(socketId).socketsJoin(matchId)
 
-        const matchRoomExists = this.matchRooms.get(matchId)
+        const matchRoomExists = this.matchRoomsById.get(matchId)
         if (!matchRoomExists) {
             const foundMatch = await this.matchService.findOne(matchId)
 
@@ -42,28 +52,25 @@ export class MatchWebSocketGateway {
                 [foundMatch.teamB.id]: foundMatch.teamB.score,
             }
 
-            this.matchRooms.set(foundMatch.id, scores)
+            this.matchRoomsById.set(foundMatch.id, scores)
             this.server.to(matchId).emit('matchScoreUpdated', {
                 matchId,
                 scores,
             })
         } else {
-            const scores = this.matchRooms.get(matchId)
+            const scores = this.matchRoomsById.get(matchId)
             this.setAndSendScoresToMatchClients({
                 matchId,
                 scores,
             })
         }
-
-        const roomSize = await this.server.in(payload.matchId).fetchSockets()
-        console.log(`${payload.socketId} joined. Total Sockets in room: ${roomSize.length}`)
     }
 
     @SubscribeMessage('matchScoreUpdateEvent')
     async setAndSendScoresToMatchClients(@MessageBody() payload: SocketMatchTeamScore) {
         const { matchId, scores } = payload
 
-        this.matchRooms.set(matchId, scores)
+        this.matchRoomsById.set(matchId, scores)
         this.server.to(matchId).emit('matchScoreUpdated', {
             matchId,
             scores,
@@ -93,5 +100,33 @@ export class MatchWebSocketGateway {
     async lobbiesCreatedEvent() {
         const lobbies = await this.matchService.getAllOpenLobbies()
         this.server.emit('getLobbiesResponse', lobbies)
+    }
+
+    // IN PROGRESS MATCHES
+    @SubscribeMessage('getInProgressMatchesByUserIdRequest')
+    async getInProgressMatchesByUserId(
+        @MessageBody() payload: { userId: string; socketId: string },
+    ) {
+        const inProgressMatches = await this.matchService.findAllByState(
+            'IN_PROGRESS',
+            payload.userId,
+        )
+
+        this.server.emit('getInProgressMatchesByUserIdResponse', inProgressMatches)
+    }
+
+    @SubscribeMessage('notifyParticipantsOnMatchProgressEvent')
+    async notifyParticipantsOnMatchProgressEvent(@MessageBody() userIds: string[]) {
+        userIds.forEach((userId) => {
+            const socketId = this.socketsByUserId.get(userId)
+
+            this.server.in(socketId).emit('shouldUpdateInProgressMatches', userId)
+        })
+    }
+
+    async updateInProgressMatchesToClients(userIds: string[]) {
+        userIds.forEach((userId) => {
+            this.server.to(userId).emit('shouldUpdateInProgressMatches')
+        })
     }
 }
