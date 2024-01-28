@@ -73,7 +73,6 @@ export class MatchService {
 
         // Need to make entity for lobby
         const formattedLobbies = lobbies.map((lobby) => {
-            console.log(lobby.teamA.users[0].user)
             // return {
             //     ...lobby,
             //     teamA: {

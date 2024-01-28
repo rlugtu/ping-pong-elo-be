@@ -88,7 +88,6 @@ export class MatchWebSocketGateway {
     @SubscribeMessage('getLobbiesByServer')
     async lobbiesCreatedEvent() {
         const lobbies = await this.matchService.getAllOpenLobbies()
-
         this.server.emit('getLobbiesResponse', lobbies)
     }
 }
