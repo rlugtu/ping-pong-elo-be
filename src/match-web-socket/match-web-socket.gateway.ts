@@ -117,6 +117,8 @@ export class MatchWebSocketGateway {
 
     @SubscribeMessage('notifyParticipantsOnMatchProgressEvent')
     async notifyParticipantsOnMatchProgressEvent(@MessageBody() userIds: string[]) {
+        console.log('notifying other participants')
+
         userIds.forEach((userId) => {
             const socketId = this.socketsByUserId.get(userId)
 
