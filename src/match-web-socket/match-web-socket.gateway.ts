@@ -42,7 +42,11 @@ export class MatchWebSocketGateway {
                 [foundMatch.teamB.id]: foundMatch.teamB.score,
             }
 
-            this.matchRooms.set(matchId, scores)
+            this.matchRooms.set(foundMatch.id, scores)
+            this.server.to(matchId).emit('matchScoreUpdated', {
+                matchId,
+                scores,
+            })
         } else {
             const scores = this.matchRooms.get(matchId)
             this.setAndSendScoresToMatchClients({
