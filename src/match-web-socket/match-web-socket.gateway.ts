@@ -46,7 +46,6 @@ export class MatchWebSocketGateway {
         const matchRoomExists = this.matchRoomsById.get(matchId)
         if (!matchRoomExists) {
             const foundMatch = await this.matchService.findOne(matchId)
-
             const scores = {
                 [foundMatch.teamA.id]: foundMatch.teamA.score,
                 [foundMatch.teamB.id]: foundMatch.teamB.score,
@@ -121,12 +120,6 @@ export class MatchWebSocketGateway {
             const socketId = this.socketsByUserId.get(userId)
 
             this.server.in(socketId).emit('shouldUpdateInProgressMatches', userId)
-        })
-    }
-
-    async updateInProgressMatchesToClients(userIds: string[]) {
-        userIds.forEach((userId) => {
-            this.server.to(userId).emit('shouldUpdateInProgressMatches')
         })
     }
 }

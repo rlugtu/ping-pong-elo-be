@@ -73,17 +73,6 @@ export class MatchService {
 
         // Need to make entity for lobby
         const formattedLobbies = lobbies.map((lobby) => {
-            // return {
-            //     ...lobby,
-            //     teamA: {
-            //         ...lobby.teamA,
-            //         users: lobby.teamA.users.map((user) => user.user),
-            //     },
-            //     teamB: {
-            //         ...lobby.teamB,
-            //         users: lobby.teamB?.users.map((user) => user.user) ?? [],
-            //     },
-            // }
             return plainToClass(FormattedLobby, {
                 ...lobby,
                 teamA: plainToClass(FormattedMatchTeam, {
