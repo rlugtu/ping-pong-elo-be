@@ -27,7 +27,6 @@ export class UsersController {
             return this.usersService.findOne(id)
         } catch (error) {
             console.log(error)
-            // console.log({ error, id, accessToken })
         }
     }
 

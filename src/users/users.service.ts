@@ -88,8 +88,6 @@ export class UsersService {
             return team.team.users.length === 1
         })
 
-        console.log(soloTeam.team)
-
         const soloElo = soloTeam.team.eloHistory[0].elo
 
         const formattedDuoTeams = user.teams.map((team) => {

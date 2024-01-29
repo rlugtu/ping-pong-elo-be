@@ -39,13 +39,15 @@ export class TeamService {
             return team.users.length === teamSize
         })
 
-        const flattenedUsers = filteredTeams.map((team) => {
-            return plainToClass(FormattedTeam, {
-                ...team,
-                users: flattenPrismaTeamUsers(team),
-                elo: team.eloHistory[0].elo,
+        const flattenedUsers = filteredTeams
+            .map((team) => {
+                return plainToClass(FormattedTeam, {
+                    ...team,
+                    users: flattenPrismaTeamUsers(team),
+                    elo: team.eloHistory[0].elo,
+                })
             })
-        })
+            .sort((a, b) => b.elo - a.elo)
 
         return flattenedUsers
     }
