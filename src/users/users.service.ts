@@ -6,6 +6,7 @@ import { plainToClass } from 'class-transformer'
 import { UserEntity } from './entities/user.entity'
 import { flattenPrismaTeamUsers, getTeamCurrentElo } from 'src/utils/team'
 import { Team } from 'src/team/entities/team.entity'
+import { STARTING_ELO } from 'src/elo-config'
 
 @Injectable()
 export class UsersService {
@@ -44,7 +45,7 @@ export class UsersService {
                     },
                     eloHistory: {
                         create: {
-                            elo: 1400,
+                            elo: STARTING_ELO,
                         },
                     },
                 },
