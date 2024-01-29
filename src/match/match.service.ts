@@ -9,6 +9,7 @@ import { FormattedLobby, FormattedMatch, FormattedMatchTeam } from './entities/m
 import { plainToClass } from 'class-transformer'
 import { convertPrismaMatchTeamToFormattedMatchTeam } from 'src/utils/match'
 import { flattenPrismaTeamUsers, getTeamCurrentElo } from 'src/utils/team'
+import { ELO_CHANGE_CONSTANT, ELO_CHANGE_CONSTANT_PLACEMENTS, STARTING_ELO } from 'src/elo-config'
 <<<<<<< Updated upstream
 =======
 import { ELO_CHANGE_CONSTANT, ELO_CHANGE_CONSTANT_PLACEMENTS, STARTING_ELO } from 'src/elo-config'
@@ -294,8 +295,6 @@ export class MatchService {
         }
     }
 
-<<<<<<< Updated upstream
-=======
     async updateEloRatings(scoreData: UpdateMatchScoreDto) {
         const { teamA, teamB } = scoreData
 
@@ -314,10 +313,8 @@ export class MatchService {
                 createdAt: 'desc',
             },
         })
-        console.log('teamAElos', teamAElos)
 
         const teamAElo = teamAElos[0].elo ?? STARTING_ELO
-        console.log({ teamAElo })
 
         const teamBElos = await this.prisma.elo.findMany({
             where: {
@@ -327,9 +324,7 @@ export class MatchService {
                 createdAt: 'desc',
             },
         })
-        console.log('teamB', teamBElos)
         const teamBElo = teamBElos[0].elo ?? STARTING_ELO
-        console.log({ teamBElo })
         const scoreDiff = Math.abs(teamA.score - teamB.score)
 
         const constantA =
@@ -347,7 +342,6 @@ export class MatchService {
         const expectedOutcomeB = 1 / (1 + Math.pow(10, (teamAElo - teamBElo) / 400))
 
         const eloBNew = teamBElo + Math.round(adjustedChangeB * (outcomeB - expectedOutcomeB))
-        console.log({ teamId: teamA.id, elo: eloANew }, { teamId: teamB.id, elo: eloBNew })
 
         await this.prisma.elo.createMany({
             data: [
@@ -357,7 +351,6 @@ export class MatchService {
         })
     }
 
->>>>>>> Stashed changes
     update(id: number, updateMatchDto: UpdateMatchDto) {
         return `This action updates a #${id} match`
     }
