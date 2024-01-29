@@ -288,6 +288,7 @@ export class MatchService {
                     state: 'COMPLETED',
                 },
             })
+            await this.updateEloRatings(scoreData)
         }
     }
 
