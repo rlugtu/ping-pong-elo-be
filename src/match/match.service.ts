@@ -9,6 +9,10 @@ import { FormattedLobby, FormattedMatch, FormattedMatchTeam } from './entities/m
 import { plainToClass } from 'class-transformer'
 import { convertPrismaMatchTeamToFormattedMatchTeam } from 'src/utils/match'
 import { flattenPrismaTeamUsers, getTeamCurrentElo } from 'src/utils/team'
+<<<<<<< Updated upstream
+=======
+import { ELO_CHANGE_CONSTANT, ELO_CHANGE_CONSTANT_PLACEMENTS, STARTING_ELO } from 'src/elo-config'
+>>>>>>> Stashed changes
 
 @Injectable()
 export class MatchService {
@@ -55,7 +59,11 @@ export class MatchService {
                                 user: true,
                             },
                         },
-                        eloHistory: true,
+                        eloHistory: {
+                            orderBy: {
+                                createdAt: 'desc',
+                            },
+                        },
                     },
                 },
                 teamB: {
@@ -65,7 +73,11 @@ export class MatchService {
                                 user: true,
                             },
                         },
-                        eloHistory: true,
+                        eloHistory: {
+                            orderBy: {
+                                createdAt: 'desc',
+                            },
+                        },
                     },
                 },
             },
@@ -142,7 +154,11 @@ export class MatchService {
                                 user: true,
                             },
                         },
-                        eloHistory: true,
+                        eloHistory: {
+                            orderBy: {
+                                createdAt: 'desc',
+                            },
+                        },
                         score: true,
                     },
                 },
@@ -153,7 +169,11 @@ export class MatchService {
                                 user: true,
                             },
                         },
-                        eloHistory: true,
+                        eloHistory: {
+                            orderBy: {
+                                createdAt: 'desc',
+                            },
+                        },
                         score: true,
                     },
                 },
@@ -274,6 +294,70 @@ export class MatchService {
         }
     }
 
+<<<<<<< Updated upstream
+=======
+    async updateEloRatings(scoreData: UpdateMatchScoreDto) {
+        const { teamA, teamB } = scoreData
+
+        let outcomeA
+        if (teamA.score > teamB.score) outcomeA = 1
+        if (teamA.score < teamB.score) outcomeA = 0
+        else outcomeA = 0.5
+
+        const outcomeB = 1 - outcomeA
+
+        const teamAElos = await this.prisma.elo.findMany({
+            where: {
+                teamId: teamA.id,
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        })
+        console.log('teamAElos', teamAElos)
+
+        const teamAElo = teamAElos[0].elo ?? STARTING_ELO
+        console.log({ teamAElo })
+
+        const teamBElos = await this.prisma.elo.findMany({
+            where: {
+                teamId: teamB.id,
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        })
+        console.log('teamB', teamBElos)
+        const teamBElo = teamBElos[0].elo ?? STARTING_ELO
+        console.log({ teamBElo })
+        const scoreDiff = Math.abs(teamA.score - teamB.score)
+
+        const constantA =
+            teamAElos.length > 5 ? ELO_CHANGE_CONSTANT : ELO_CHANGE_CONSTANT_PLACEMENTS
+        const constantB =
+            teamBElos.length > 5 ? ELO_CHANGE_CONSTANT : ELO_CHANGE_CONSTANT_PLACEMENTS
+
+        const adjustedChangeA = constantA * (1 + (scoreDiff - 1) / 10)
+        const adjustedChangeB = constantB * (1 + (scoreDiff - 1) / 10)
+
+        const expectedOutcomeA = 1 / (1 + Math.pow(10, (teamBElo - teamAElo) / 400))
+
+        const eloANew = teamAElo + Math.round(adjustedChangeA * (outcomeA - expectedOutcomeA))
+
+        const expectedOutcomeB = 1 / (1 + Math.pow(10, (teamAElo - teamBElo) / 400))
+
+        const eloBNew = teamBElo + Math.round(adjustedChangeB * (outcomeB - expectedOutcomeB))
+        console.log({ teamId: teamA.id, elo: eloANew }, { teamId: teamB.id, elo: eloBNew })
+
+        await this.prisma.elo.createMany({
+            data: [
+                { teamId: teamA.id, elo: eloANew },
+                { teamId: teamB.id, elo: eloBNew },
+            ],
+        })
+    }
+
+>>>>>>> Stashed changes
     update(id: number, updateMatchDto: UpdateMatchDto) {
         return `This action updates a #${id} match`
     }

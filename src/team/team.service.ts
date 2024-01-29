@@ -7,6 +7,7 @@ import { Team as FormattedTeam } from './entities/team.entity'
 import { plainToClass } from 'class-transformer'
 import { TeamQueryParams } from './dto/query-param.dto'
 import { flattenPrismaTeamUsers } from 'src/utils/team'
+import { STARTING_ELO } from 'src/elo-config'
 
 @Injectable()
 export class TeamService {
@@ -105,7 +106,7 @@ export class TeamService {
                     },
                     eloHistory: {
                         create: {
-                            elo: 1400,
+                            elo: STARTING_ELO,
                         },
                     },
                 },

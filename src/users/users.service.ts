@@ -4,7 +4,7 @@ import { UpdateUserDto } from './dto/update-user.dto'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { plainToClass } from 'class-transformer'
 import { UserEntity } from './entities/user.entity'
-import { flattenPrismaTeamUsers, getTeamCurrentElo } from 'src/utils/team'
+import { getTeamCurrentElo } from 'src/utils/team'
 import { Team } from 'src/team/entities/team.entity'
 
 @Injectable()
@@ -30,7 +30,6 @@ export class UsersService {
         })
 
         if (user.teams && !user.teams.length) {
-            console.log('New User Found. Creating Solo Team')
             await this.prisma.team.create({
                 data: {
                     users: {
@@ -68,7 +67,11 @@ export class UsersService {
                     include: {
                         team: {
                             include: {
-                                eloHistory: true,
+                                eloHistory: {
+                                    orderBy: {
+                                        createdAt: 'desc',
+                                    },
+                                },
                                 users: {
                                     include: {
                                         user: true,
@@ -84,6 +87,8 @@ export class UsersService {
         const soloTeam = user.teams.find((team) => {
             return team.team.users.length === 1
         })
+
+        console.log(soloTeam.team)
 
         const soloElo = soloTeam.team.eloHistory[0].elo
 
