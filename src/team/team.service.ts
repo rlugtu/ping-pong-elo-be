@@ -75,7 +75,7 @@ export class TeamService {
                         team: true,
                     },
                     orderBy: {
-                        elo: 'asc',
+                        elo: 'desc',
                     },
                 },
             },
