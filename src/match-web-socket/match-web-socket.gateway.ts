@@ -8,6 +8,7 @@ import { Server } from 'socket.io'
 import { FormattedLobby } from 'src/match/entities/match.entity'
 import { MatchService } from 'src/match/match.service'
 import { SocketMatchTeamScore } from 'src/types/match'
+import { Notification } from 'src/types/notification'
 
 type MatchRoomMap = Map<string, Record<string, number>>
 @WebSocketGateway({ cors: true })
@@ -56,6 +57,34 @@ export class MatchWebSocketGateway {
                 matchId,
                 scores,
             })
+
+            // alert other users you're in the room
+            const peopleInRoom = await this.server.in(matchId).fetchSockets()
+            const matchParticpantAmount = foundMatch.mode === 'SINGLES' ? 2 : 4
+            if (peopleInRoom.length < matchParticpantAmount) {
+                const socketsToEmitTo = [
+                    ...foundMatch.teamB.users.map((user) => {
+                        return this.socketsByUserId.get(user.id)
+                    }),
+                    ...foundMatch.teamA.users.map((user) => {
+                        return this.socketsByUserId.get(user.id)
+                    }),
+                ].filter((id) => id !== payload.socketId)
+
+                const notificationMessage: Notification = {
+                    title: 'Opponent has checked in',
+                    description:
+                        'Your opponent is waiting for you in your match. Head over there to start recording your score.',
+                    cta: {
+                        name: 'Go',
+                        link: `/match/${foundMatch.id}`,
+                    },
+                }
+
+                socketsToEmitTo.forEach((socketId) => {
+                    this.server.in(socketId).emit('notificationAlert', notificationMessage)
+                })
+            }
         } else {
             const scores = this.matchRoomsById.get(matchId)
             this.setAndSendScoresToMatchClients({
