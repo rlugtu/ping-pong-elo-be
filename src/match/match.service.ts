@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common'
 import { CreateMatchDto } from './dto/create-match.dto'
-import { JoinMatchDto, TeamScoreDto, UpdateMatchDto } from './dto/update-match.dto'
+import {
+    JoinMatchDto,
+    TeamScoreDto,
+    UpdateEloRatingDto,
+    UpdateMatchDto,
+} from './dto/update-match.dto'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { TeamService } from 'src/team/team.service'
 import { MatchState } from '@prisma/client'
@@ -307,7 +312,18 @@ export class MatchService {
                         state: 'COMPLETED',
                     },
                 })
-                // await this.updateEloRatings(matchInfo)
+                await this.updateEloRatings({
+                    teamA: {
+                        teamId: match.teamA.id,
+                        score: match.teamA.score[0].score,
+                        isFinalScore: true,
+                    },
+                    teamB: {
+                        teamId: match.teamB.id,
+                        score: match.teamB.score[0].score,
+                        isFinalScore: true,
+                    },
+                })
             } else {
                 // if last user submission wasn't winning, reset the game to in progress
                 await this.prisma.teamScore.update({
@@ -325,61 +341,62 @@ export class MatchService {
         }
     }
 
-    // async updateEloRatings(scoreData: UpdateMatchScoreDto) {
-    //     const { teamA, teamB } = scoreData
+    async updateEloRatings(scoreData: UpdateEloRatingDto) {
+        const { teamA, teamB } = scoreData
 
-    //     let outcomeA
-    //     if (teamA.score > teamB.score) outcomeA = 1
-    //     if (teamA.score < teamB.score) outcomeA = 0
-    //     else outcomeA = 0.5
+        let outcomeA
+        if (teamA.score > teamB.score) outcomeA = 1
+        else if (teamA.score < teamB.score) outcomeA = 0
+        else outcomeA = 0.5
 
-    //     const outcomeB = 1 - outcomeA
+        const outcomeB = 1 - outcomeA
 
-    //     const teamAElos = await this.prisma.elo.findMany({
-    //         where: {
-    //             teamId: teamA.teamId,
-    //         },
-    //         orderBy: {
-    //             createdAt: 'desc',
-    //         },
-    //     })
+        const teamAElos = await this.prisma.elo.findMany({
+            where: {
+                teamId: teamA.teamId,
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        })
 
-    //     const teamAElo = teamAElos[0].elo ?? STARTING_ELO
+        const teamBElos = await this.prisma.elo.findMany({
+            where: {
+                teamId: teamB.teamId,
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        })
 
-    //     const teamBElos = await this.prisma.elo.findMany({
-    //         where: {
-    //             teamId: teamB.teamId,
-    //         },
-    //         orderBy: {
-    //             createdAt: 'desc',
-    //         },
-    //     })
-    //     const teamBElo = teamBElos[0].elo ?? STARTING_ELO
-    //     const scoreDiff = Math.abs(teamA.score - teamB.score)
+        const teamAElo = teamAElos[0].elo ?? STARTING_ELO
+        const teamBElo = teamBElos[0].elo ?? STARTING_ELO
 
-    //     const constantA =
-    //         teamAElos.length > 5 ? ELO_CHANGE_CONSTANT : ELO_CHANGE_CONSTANT_PLACEMENTS
-    //     const constantB =
-    //         teamBElos.length > 5 ? ELO_CHANGE_CONSTANT : ELO_CHANGE_CONSTANT_PLACEMENTS
+        const scoreDiff = Math.abs(teamA.score - teamB.score)
 
-    //     const adjustedChangeA = constantA * (1 + (scoreDiff - 1) / 10)
-    //     const adjustedChangeB = constantB * (1 + (scoreDiff - 1) / 10)
+        const constantA =
+            teamAElos.length > 5 ? ELO_CHANGE_CONSTANT : ELO_CHANGE_CONSTANT_PLACEMENTS
+        const constantB =
+            teamBElos.length > 5 ? ELO_CHANGE_CONSTANT : ELO_CHANGE_CONSTANT_PLACEMENTS
 
-    //     const expectedOutcomeA = 1 / (1 + Math.pow(10, (teamBElo - teamAElo) / 400))
+        const adjustedChangeA = constantA * (1 + (scoreDiff - 1) / 10)
+        const adjustedChangeB = constantB * (1 + (scoreDiff - 1) / 10)
 
-    //     const eloANew = teamAElo + Math.round(adjustedChangeA * (outcomeA - expectedOutcomeA))
+        const expectedOutcomeA = 1 / (1 + Math.pow(10, (teamBElo - teamAElo) / 400))
 
-    //     const expectedOutcomeB = 1 / (1 + Math.pow(10, (teamAElo - teamBElo) / 400))
+        const eloANew = teamAElo + Math.round(adjustedChangeA * (outcomeA - expectedOutcomeA))
 
-    //     const eloBNew = teamBElo + Math.round(adjustedChangeB * (outcomeB - expectedOutcomeB))
+        const expectedOutcomeB = 1 / (1 + Math.pow(10, (teamAElo - teamBElo) / 400))
 
-    //     await this.prisma.elo.createMany({
-    //         data: [
-    //             { teamId: teamA.teamId, elo: eloANew },
-    //             { teamId: teamB.teamId, elo: eloBNew },
-    //         ],
-    //     })
-    // }
+        const eloBNew = teamBElo + Math.round(adjustedChangeB * (outcomeB - expectedOutcomeB))
+
+        await this.prisma.elo.createMany({
+            data: [
+                { teamId: teamA.teamId, elo: eloANew },
+                { teamId: teamB.teamId, elo: eloBNew },
+            ],
+        })
+    }
 
     update(id: number, updateMatchDto: UpdateMatchDto) {
         return `This action updates a #${id} match`
