@@ -180,6 +180,9 @@ export class MatchService {
                     },
                 },
             },
+            orderBy: {
+                updatedAt: 'desc',
+            },
         })
 
         const formattedMatch = matches.map((match) => {
