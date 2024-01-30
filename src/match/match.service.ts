@@ -297,7 +297,7 @@ export class MatchService {
 
         let outcomeA
         if (teamA.score > teamB.score) outcomeA = 1
-        if (teamA.score < teamB.score) outcomeA = 0
+        else if (teamA.score < teamB.score) outcomeA = 0
         else outcomeA = 0.5
 
         const outcomeB = 1 - outcomeA
@@ -311,8 +311,6 @@ export class MatchService {
             },
         })
 
-        const teamAElo = teamAElos[0].elo ?? STARTING_ELO
-
         const teamBElos = await this.prisma.elo.findMany({
             where: {
                 teamId: teamB.id,
@@ -321,7 +319,10 @@ export class MatchService {
                 createdAt: 'desc',
             },
         })
+
+        const teamAElo = teamAElos[0].elo ?? STARTING_ELO
         const teamBElo = teamBElos[0].elo ?? STARTING_ELO
+
         const scoreDiff = Math.abs(teamA.score - teamB.score)
 
         const constantA =
