@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common'
 import { MatchService } from './match.service'
 import { CreateMatchDto } from './dto/create-match.dto'
-import { JoinMatchDto, UpdateMatchDto, UpdateMatchScoreDto } from './dto/update-match.dto'
+import { JoinMatchDto, TeamScoreDto, UpdateMatchDto } from './dto/update-match.dto'
 import { MatchState } from '@prisma/client'
 import { FormattedMatch } from './entities/match.entity'
 
@@ -45,7 +45,7 @@ export class MatchController {
     }
 
     @Patch(':id/score')
-    async updateMatchScore(@Param('id') id: string, @Body() scoreData: UpdateMatchScoreDto) {
+    async updateMatchScore(@Param('id') id: string, @Body() scoreData: TeamScoreDto) {
         try {
             return await this.matchService.updateMatchScore(id, scoreData)
         } catch (error) {

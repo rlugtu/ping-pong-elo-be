@@ -4,13 +4,20 @@ import {
     WebSocketGateway,
     WebSocketServer,
 } from '@nestjs/websockets'
+import { MatchState } from '@prisma/client'
 import { Server } from 'socket.io'
 import { FormattedLobby } from 'src/match/entities/match.entity'
 import { MatchService } from 'src/match/match.service'
-import { SocketMatchTeamScore } from 'src/types/match'
 import { Notification } from 'src/types/notification'
 
-type MatchRoomMap = Map<string, Record<string, number>>
+type MatchRoomMap = Map<string, MatchRoomInfo>
+type MatchRoomInfo = {
+    scores: {
+        [teamId: string]: number
+    }
+    state: MatchState
+    participants: string[] // string of userIds
+}
 @WebSocketGateway({ cors: true })
 export class MatchWebSocketGateway {
     public matchRoomsById: MatchRoomMap = new Map()
@@ -52,24 +59,31 @@ export class MatchWebSocketGateway {
                 [foundMatch.teamB.id]: foundMatch.teamB.score,
             }
 
-            this.matchRoomsById.set(foundMatch.id, scores)
+            const participants = [
+                ...foundMatch.teamA.users.map((user) => user.id),
+                ...foundMatch.teamB.users.map((user) => user.id),
+            ]
+
+            const matchRoomInfo = {
+                scores,
+                state: foundMatch.state,
+                participants,
+            }
+
+            this.matchRoomsById.set(foundMatch.id, matchRoomInfo)
+
             this.server.to(matchId).emit('matchScoreUpdated', {
                 matchId,
-                scores,
+                ...matchRoomInfo,
             })
 
             // alert other users you're in the room
             const peopleInRoom = await this.server.in(matchId).fetchSockets()
             const matchParticpantAmount = foundMatch.mode === 'SINGLES' ? 2 : 4
             if (peopleInRoom.length < matchParticpantAmount) {
-                const socketsToEmitTo = [
-                    ...foundMatch.teamB.users.map((user) => {
-                        return this.socketsByUserId.get(user.id)
-                    }),
-                    ...foundMatch.teamA.users.map((user) => {
-                        return this.socketsByUserId.get(user.id)
-                    }),
-                ].filter((id) => id !== payload.socketId)
+                const socketsToEmitTo = participants
+                    .map((userId) => this.socketsByUserId.get(userId))
+                    .filter((socketId) => socketId !== payload.socketId)
 
                 const notificationMessage: Notification = {
                     title: 'Opponent has checked in',
@@ -86,22 +100,28 @@ export class MatchWebSocketGateway {
                 })
             }
         } else {
-            const scores = this.matchRoomsById.get(matchId)
+            const matchRoomInfo = this.matchRoomsById.get(matchId)
             this.setAndSendScoresToMatchClients({
                 matchId,
-                scores,
+                matchRoomInfo,
             })
         }
     }
 
     @SubscribeMessage('matchScoreUpdateEvent')
-    async setAndSendScoresToMatchClients(@MessageBody() payload: SocketMatchTeamScore) {
-        const { matchId, scores } = payload
+    async setAndSendScoresToMatchClients(
+        @MessageBody()
+        payload: {
+            matchId: string
+            matchRoomInfo: MatchRoomInfo
+        },
+    ) {
+        const { matchId } = payload
 
-        this.matchRoomsById.set(matchId, scores)
+        this.matchRoomsById.set(matchId, payload.matchRoomInfo)
         this.server.to(matchId).emit('matchScoreUpdated', {
             matchId,
-            scores,
+            matchRoomInfo: payload.matchRoomInfo,
         })
     }
 

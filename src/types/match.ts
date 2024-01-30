@@ -7,10 +7,3 @@ export type PrismaTeamMatchInfo = PrismaTeamWithUsers &
     PrismaTeamWithElo & {
         score: TeamScore[]
     }
-
-export type SocketMatchTeamScore = {
-    matchId: string
-    scores: {
-        [teamId: string]: number
-    }
-}

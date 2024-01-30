@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common'
 import { CreateMatchDto } from './dto/create-match.dto'
-import { JoinMatchDto, UpdateMatchDto, UpdateMatchScoreDto } from './dto/update-match.dto'
+import {
+    JoinMatchDto,
+    TeamScoreDto,
+    UpdateEloRatingDto,
+    UpdateMatchDto,
+} from './dto/update-match.dto'
 import { PrismaService } from 'src/prisma/prisma.service'
 import { TeamService } from 'src/team/team.service'
 import { MatchState } from '@prisma/client'
@@ -253,46 +258,90 @@ export class MatchService {
         })
     }
 
-    async updateMatchScore(matchId: string, scoreData: UpdateMatchScoreDto): Promise<void> {
-        const { teamA, teamB } = scoreData
+    async updateMatchScore(matchId: string, matchInfo: TeamScoreDto): Promise<void> {
+        const { teamId, score, isFinalScore } = matchInfo
+
+        await this.prisma.teamScore.update({
+            where: {
+                teamIdMatchId: {
+                    teamId,
+                    matchId,
+                },
+            },
+            data: {
+                score,
+                isFinalScore,
+            },
+        })
 
         const match = await this.prisma.match.findFirst({
             where: {
                 id: matchId,
             },
-        })
-
-        const teamScores = [teamA, teamB].map((team) => {
-            return this.prisma.teamScore.update({
-                where: {
-                    teamIdMatchId: {
-                        teamId: team.id,
-                        matchId,
+            include: {
+                teamScores: true,
+                teamA: {
+                    include: {
+                        score: true,
                     },
                 },
-                data: {
-                    score: team.score,
+                teamB: {
+                    include: {
+                        score: true,
+                    },
                 },
-            })
+            },
         })
 
-        await Promise.all(teamScores)
+        const matchScoresAreFinalized = match.teamScores.every((score) => {
+            return score.isFinalScore === true
+        })
 
-        // Check if win condition has been reached
-        if (teamA.score >= match.winningScore || teamB.score >= match.winningScore) {
-            await this.prisma.match.update({
-                where: {
-                    id: matchId,
-                },
-                data: {
-                    state: 'COMPLETED',
-                },
-            })
-            await this.updateEloRatings(scoreData)
+        if (matchScoresAreFinalized) {
+            // Check if win condition has been reached
+            const winConditionReached = match.teamScores.some(
+                (score) => score.score >= match.winningScore,
+            )
+
+            if (winConditionReached) {
+                await this.prisma.match.update({
+                    where: {
+                        id: matchId,
+                    },
+                    data: {
+                        state: 'COMPLETED',
+                    },
+                })
+                await this.updateEloRatings({
+                    teamA: {
+                        teamId: match.teamA.id,
+                        score: match.teamA.score[0].score,
+                        isFinalScore: true,
+                    },
+                    teamB: {
+                        teamId: match.teamB.id,
+                        score: match.teamB.score[0].score,
+                        isFinalScore: true,
+                    },
+                })
+            } else {
+                // if last user submission wasn't winning, reset the game to in progress
+                await this.prisma.teamScore.update({
+                    where: {
+                        teamIdMatchId: {
+                            teamId,
+                            matchId,
+                        },
+                    },
+                    data: {
+                        isFinalScore: false,
+                    },
+                })
+            }
         }
     }
 
-    async updateEloRatings(scoreData: UpdateMatchScoreDto) {
+    async updateEloRatings(scoreData: UpdateEloRatingDto) {
         const { teamA, teamB } = scoreData
 
         let outcomeA
@@ -304,7 +353,7 @@ export class MatchService {
 
         const teamAElos = await this.prisma.elo.findMany({
             where: {
-                teamId: teamA.id,
+                teamId: teamA.teamId,
             },
             orderBy: {
                 createdAt: 'desc',
@@ -313,7 +362,7 @@ export class MatchService {
 
         const teamBElos = await this.prisma.elo.findMany({
             where: {
-                teamId: teamB.id,
+                teamId: teamB.teamId,
             },
             orderBy: {
                 createdAt: 'desc',
@@ -343,8 +392,8 @@ export class MatchService {
 
         await this.prisma.elo.createMany({
             data: [
-                { teamId: teamA.id, elo: eloANew },
-                { teamId: teamB.id, elo: eloBNew },
+                { teamId: teamA.teamId, elo: eloANew },
+                { teamId: teamB.teamId, elo: eloBNew },
             ],
         })
     }
