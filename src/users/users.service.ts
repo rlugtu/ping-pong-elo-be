@@ -89,7 +89,7 @@ export class UsersService {
             return team.team.users.length === 1
         })
 
-        const soloElo = soloTeam.team.eloHistory[0].elo
+        const soloElo = soloTeam.team.eloHistory[0]?.elo ?? 1200
 
         const formattedDuoTeams = user.teams.map((team) => {
             return plainToClass(Team, {

@@ -1,7 +1,12 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common'
 import { MatchService } from './match.service'
 import { CreateMatchDto } from './dto/create-match.dto'
-import { JoinMatchDto, TeamScoreDto, UpdateMatchDto } from './dto/update-match.dto'
+import {
+    JoinMatchDto,
+    TeamScoreDto,
+    UpdateEloRatingDto,
+    UpdateMatchDto,
+} from './dto/update-match.dto'
 import { MatchState } from '@prisma/client'
 import { FormattedMatch } from './entities/match.entity'
 
@@ -26,7 +31,19 @@ export class MatchController {
     @Get('lobbies')
     getAllLobbies() {
         try {
-            return this.matchService.getAllOpenLobbies()
+            const temp: UpdateEloRatingDto = {
+                teamA: {
+                    teamId: 'clrqnfz600002baxn8q5mdeet',
+                    score: 22,
+                    isFinalScore: true,
+                },
+                teamB: {
+                    teamId: 'clrqnepab0000baxn3i9krd37',
+                    score: 1,
+                    isFinalScore: true,
+                },
+            }
+            return this.matchService.updateEloRatings(temp)
         } catch (error) {}
     }
 
