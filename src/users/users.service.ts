@@ -54,8 +54,40 @@ export class UsersService {
         return user
     }
 
-    findAll() {
-        return `This action returns all users`
+    async findAll() {
+        const users = await this.prisma.user.findMany({
+            include: {
+                teams: {
+                    include: {
+                        team: {
+                            include: {
+                                eloHistory: {
+                                    orderBy: {
+                                        createdAt: 'desc',
+                                    },
+                                },
+                                users: {
+                                    include: {
+                                        user: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        })
+        // const formatted = users.map((user) => {
+        //     const soloTeam = user.teams.find((team) => {
+        //         return team.team.users.length === 1
+        //     })
+
+        //     const soloElo = soloTeam.team.eloHistory[0].elo
+        //     console.log(soloElo)
+        //     return { ...user, elo: soloElo }
+        // })
+
+        return users
     }
 
     async findOne(id: string): Promise<UserEntity> {
