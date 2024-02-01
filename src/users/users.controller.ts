@@ -20,7 +20,6 @@ export class UsersController {
     async findAll() {
         try {
             const response = await this.usersService.findAll()
-            console.log(response)
             return response
         } catch (error) {}
     }

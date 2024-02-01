@@ -25,20 +25,27 @@ export class MatchService {
 
     async create(createMatchDto: CreateMatchDto) {
         try {
-            const teamToJoin = await this.teamService.findOrCreateTeam(createMatchDto.teamA)
-
+            const matchOwnerTeam = await this.teamService.findOrCreateTeam(createMatchDto.teamA)
+            const opposingTeam = await this.teamService.findOrCreateTeam(createMatchDto.teamB)
             const match = this.prisma.match.create({
                 data: {
                     ...createMatchDto,
                     teamA: {
                         connect: {
-                            id: teamToJoin.id,
+                            id: matchOwnerTeam.id,
                         },
                     },
+                    ...(opposingTeam && {
+                        teamB: {
+                            connect: {
+                                id: opposingTeam.id,
+                            },
+                        },
+                    }),
                     teamScores: {
                         create: {
                             score: 0,
-                            teamId: teamToJoin.id,
+                            teamId: matchOwnerTeam.id,
                         },
                     },
                 },
@@ -86,20 +93,22 @@ export class MatchService {
         })
 
         // Need to make entity for lobby
-        const formattedLobbies = lobbies.map((lobby) => {
-            return plainToClass(FormattedLobby, {
-                ...lobby,
-                teamA: plainToClass(FormattedMatchTeam, {
-                    ...lobby.teamA,
-                    users: lobby.teamA.users.map((user) => user.user),
-                    elo: getTeamCurrentElo(lobby.teamA),
-                }),
-                teamB: plainToClass(FormattedMatchTeam, {
-                    ...lobby.teamB,
-                    users: lobby.teamB?.users?.map((user) => user.user) ?? [],
-                }),
+        const formattedLobbies = lobbies
+            // .filter((lobby) => !lobby.teamB)
+            .map((lobby) => {
+                return plainToClass(FormattedLobby, {
+                    ...lobby,
+                    teamA: plainToClass(FormattedMatchTeam, {
+                        ...lobby.teamA,
+                        users: lobby.teamA.users.map((user) => user.user),
+                        elo: getTeamCurrentElo(lobby.teamA),
+                    }),
+                    teamB: plainToClass(FormattedMatchTeam, {
+                        ...lobby.teamB,
+                        users: lobby.teamB?.users?.map((user) => user.user) ?? [],
+                    }),
+                })
             })
-        })
 
         return formattedLobbies
     }
