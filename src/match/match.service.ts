@@ -402,6 +402,20 @@ export class MatchService {
 
         const eloBNew = teamBElo + Math.round(adjustedChangeB * (outcomeB - expectedOutcomeB))
 
+        console.log({
+            teamA,
+            teamB,
+            teamAElo,
+            teamBElo,
+            scoreDiff,
+            constantA,
+            constantB,
+            expectedOutcomeA,
+            expectedOutcomeB,
+            eloANew,
+            eloBNew,
+        })
+
         await this.prisma.elo.createMany({
             data: [
                 { teamId: teamA.teamId, elo: eloANew },
