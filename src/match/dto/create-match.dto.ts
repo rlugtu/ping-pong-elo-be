@@ -1,5 +1,5 @@
 import { MatchMode, MatchState } from '@prisma/client'
-import { ArrayMinSize, IsArray, IsNumber, IsString } from 'class-validator'
+import { ArrayMinSize, IsArray, IsNumber, IsOptional, IsString } from 'class-validator'
 
 export class CreateMatchDto {
     state: MatchState
@@ -10,6 +10,10 @@ export class CreateMatchDto {
     @IsArray()
     @ArrayMinSize(1)
     teamA: string[]
+
+    @IsOptional()
+    @IsArray()
+    teamB: string[]
 
     @IsString()
     mode: MatchMode

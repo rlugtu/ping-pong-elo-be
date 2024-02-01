@@ -17,14 +17,17 @@ export class UsersController {
     }
 
     @Get()
-    findAll() {
-        return this.usersService.findAll()
+    async findAll() {
+        try {
+            const response = await this.usersService.findAll()
+            return response
+        } catch (error) {}
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
+    async findOne(@Param('id') id: string) {
         try {
-            return this.usersService.findOne(id)
+            return await this.usersService.findOne(id)
         } catch (error) {
             console.log(error)
         }

@@ -8,6 +8,7 @@ import { MatchState } from '@prisma/client'
 import { Server } from 'socket.io'
 import { FormattedLobby } from 'src/match/entities/match.entity'
 import { MatchService } from 'src/match/match.service'
+import { MatchChallenge } from 'src/types/match'
 import { Notification } from 'src/types/notification'
 
 type MatchRoomMap = Map<string, MatchRoomInfo>
@@ -23,6 +24,7 @@ export class MatchWebSocketGateway {
     public matchRoomsById: MatchRoomMap = new Map()
     public lobbies: FormattedLobby[] = []
     public socketsByUserId: Map<string, string> = new Map()
+    public challengeMatchRequestsByChallengeeId: Map<string, MatchChallenge> = new Map()
 
     @WebSocketServer()
     server: Server
@@ -38,6 +40,11 @@ export class MatchWebSocketGateway {
         },
     ) {
         this.socketsByUserId.set(payload.userId, payload.socketId)
+
+        const challengeMatch = this.challengeMatchRequestsByChallengeeId.get(payload.userId)
+        if (challengeMatch) {
+            this.server.in(payload.socketId).emit('challengeMatchRequest', challengeMatch)
+        }
     }
 
     @SubscribeMessage('joinMatch')
@@ -170,5 +177,32 @@ export class MatchWebSocketGateway {
 
             this.server.in(socketId).emit('shouldUpdateInProgressMatches', userId)
         })
+    }
+
+    // CHALLENGE MATCH
+    @SubscribeMessage('challengeMatchRequest')
+    async sendChallengeMatchRequestToChallengee(
+        @MessageBody()
+        payload: MatchChallenge,
+    ) {
+        this.challengeMatchRequestsByChallengeeId.set(payload.challengeeUserId, payload)
+
+        const challengeeSocket = this.socketsByUserId.get(payload.challengeeUserId)
+
+        this.server.in(challengeeSocket).emit('challengeMatchRequest', payload)
+    }
+
+    // CHALLENGE MATCH
+    @SubscribeMessage('clearUserChallengeRequest')
+    async clearChallengeMatchNotifc(
+        @MessageBody()
+        payload: {
+            userId: string
+        },
+    ) {
+        this.challengeMatchRequestsByChallengeeId.delete(payload.userId)
+
+        const challengeeSocket = this.socketsByUserId.get(payload.userId)
+        this.server.in(challengeeSocket).emit('challengeMatchRequest', null)
     }
 }
