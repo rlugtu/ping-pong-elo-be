@@ -68,7 +68,9 @@ export class MatchController {
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.matchService.remove(+id)
+    async remove(@Param('id') id: string) {
+        try {
+            return await this.matchService.remove(id)
+        } catch (error) {}
     }
 }

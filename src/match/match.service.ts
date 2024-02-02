@@ -26,7 +26,10 @@ export class MatchService {
     async create(createMatchDto: CreateMatchDto) {
         try {
             const matchOwnerTeam = await this.teamService.findOrCreateTeam(createMatchDto.teamA)
-            const opposingTeam = await this.teamService.findOrCreateTeam(createMatchDto.teamB)
+            const opposingTeam = createMatchDto.teamB?.length
+                ? await this.teamService.findOrCreateTeam(createMatchDto.teamB)
+                : null
+
             const match = this.prisma.match.create({
                 data: {
                     ...createMatchDto,
@@ -35,13 +38,13 @@ export class MatchService {
                             id: matchOwnerTeam.id,
                         },
                     },
-                    ...(opposingTeam && {
-                        teamB: {
-                            connect: {
-                                id: opposingTeam.id,
-                            },
-                        },
-                    }),
+                    teamB: opposingTeam
+                        ? {
+                              connect: {
+                                  id: opposingTeam.id,
+                              },
+                          }
+                        : {},
                     teamScores: {
                         create: {
                             score: 0,
@@ -94,7 +97,7 @@ export class MatchService {
 
         // Need to make entity for lobby
         const formattedLobbies = lobbies
-            // .filter((lobby) => !lobby.teamB)
+            .filter((lobby) => !lobby.teamB)
             .map((lobby) => {
                 return plainToClass(FormattedLobby, {
                     ...lobby,
@@ -316,23 +319,44 @@ export class MatchService {
             )
 
             if (winConditionReached) {
-                await this.prisma.match.update({
+                const updatedMatch = await this.prisma.match.update({
                     where: {
                         id: matchId,
                     },
                     data: {
                         state: 'COMPLETED',
                     },
+                    include: {
+                        teamA: {
+                            include: {
+                                score: {
+                                    orderBy: {
+                                        createdAt: 'desc',
+                                    },
+                                },
+                            },
+                        },
+                        teamB: {
+                            include: {
+                                score: {
+                                    orderBy: {
+                                        createdAt: 'desc',
+                                    },
+                                },
+                            },
+                        },
+                    },
                 })
+
                 await this.updateEloRatings({
                     teamA: {
                         teamId: match.teamA.id,
-                        score: match.teamA.score[0].score,
+                        score: updatedMatch.teamA.score[0].score,
                         isFinalScore: true,
                     },
                     teamB: {
                         teamId: match.teamB.id,
-                        score: match.teamB.score[0].score,
+                        score: updatedMatch.teamB.score[0].score,
                         isFinalScore: true,
                     },
                 })
@@ -402,19 +426,19 @@ export class MatchService {
 
         const eloBNew = teamBElo + Math.round(adjustedChangeB * (outcomeB - expectedOutcomeB))
 
-        console.log({
-            teamA,
-            teamB,
-            teamAElo,
-            teamBElo,
-            scoreDiff,
-            constantA,
-            constantB,
-            expectedOutcomeA,
-            expectedOutcomeB,
-            eloANew,
-            eloBNew,
-        })
+        // console.log({
+        //     teamA,
+        //     teamB,
+        //     teamAElo,
+        //     teamBElo,
+        //     scoreDiff,
+        //     constantA,
+        //     constantB,
+        //     expectedOutcomeA,
+        //     expectedOutcomeB,
+        //     eloANew,
+        //     eloBNew,
+        // })
 
         await this.prisma.elo.createMany({
             data: [
@@ -454,7 +478,11 @@ export class MatchService {
         } catch (error) {}
     }
 
-    remove(id: number) {
-        return `This action removes a #${id} match`
+    async remove(id: string) {
+        return await this.prisma.match.delete({
+            where: {
+                id,
+            },
+        })
     }
 }
