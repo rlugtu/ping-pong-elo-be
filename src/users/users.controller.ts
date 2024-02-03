@@ -28,9 +28,7 @@ export class UsersController {
     async findOne(@Param('id') id: string) {
         try {
             return await this.usersService.findOne(id)
-        } catch (error) {
-            console.log(error)
-        }
+        } catch (error) {}
     }
 
     @Patch(':id')

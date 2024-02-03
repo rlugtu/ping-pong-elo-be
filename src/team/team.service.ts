@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, flatten } from '@nestjs/common'
 import { CreateTeamDto } from './dto/create-team.dto'
 import { UpdateTeamDto } from './dto/update-team.dto'
 import { PrismaService } from 'src/prisma/prisma.service'
@@ -18,7 +18,7 @@ export class TeamService {
 
     async findAll(qp: TeamQueryParams) {
         const teams = await this.prisma.team.findMany({
-            ...(qp.limit && { take: qp.limit }),
+            // ...(qp.limit && { take: qp.limit }),
             where: {},
             include: {
                 users: {
@@ -48,6 +48,10 @@ export class TeamService {
                 })
             })
             .sort((a, b) => b.elo - a.elo)
+
+        if (qp.limit) {
+            return flattenedUsers.slice(0, qp.limit)
+        }
 
         return flattenedUsers
     }
