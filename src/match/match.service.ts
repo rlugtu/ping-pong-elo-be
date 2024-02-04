@@ -193,7 +193,7 @@ export class MatchService {
                 },
             },
             orderBy: {
-                updatedAt: 'desc',
+                updatedAt: 'asc',
             },
         })
 
@@ -319,12 +319,14 @@ export class MatchService {
             )
 
             if (winConditionReached) {
+                const winningTeam = match.teamScores.sort((a, b) => a.score - b.score)
                 const updatedMatch = await this.prisma.match.update({
                     where: {
                         id: matchId,
                     },
                     data: {
                         state: 'COMPLETED',
+                        winningTeamId: winningTeam[0].id,
                     },
                     include: {
                         teamA: {

@@ -63,7 +63,9 @@ model Team {
 
     // relations
     teamA Match[] @relation("teamA")
+
     teamB Match[] @relation("teamB")
+
     eloHistory Elo[]
 }
 
@@ -84,6 +86,7 @@ model TeamScore {
     matchId String
 
     @@unique(name: "teamIdMatchId",[teamId, matchId])
+
 }
 
 enum MatchMode {
@@ -102,6 +105,7 @@ model Match {
     state MatchState @default(SETUP)
     winningScore Int
     mode MatchMode
+    winningTeamId String ?
 
     createdAt   DateTime @default(now()) @db.Timestamptz(6)
     updatedAt   DateTime @updatedAt @db.Timestamptz(6)   

@@ -40,6 +40,7 @@ export class FormattedMatchTeam {
     updatedAt: Date
     users: User[]
     score: number
+    winningTeamId: string
 
     @Exclude()
     eloHistory: Elo[]

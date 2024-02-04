@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common'
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common'
 import { MatchService } from './match.service'
 import { CreateMatchDto } from './dto/create-match.dto'
 import { JoinMatchDto, TeamScoreDto, UpdateMatchDto } from './dto/update-match.dto'
@@ -17,9 +17,12 @@ export class MatchController {
     }
 
     @Get('state/:matchState')
-    async findByState(@Param('matchState') matchState: MatchState): Promise<FormattedMatch[]> {
+    async findByState(
+        @Param('matchState') matchState: MatchState,
+        @Query('userId') userId: string,
+    ): Promise<FormattedMatch[]> {
         try {
-            return this.matchService.findAllByState(matchState)
+            return this.matchService.findAllByState(matchState, userId)
         } catch (error) {}
     }
 
