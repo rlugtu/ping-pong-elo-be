@@ -4,10 +4,18 @@ import { CreateMatchDto } from './dto/create-match.dto'
 import { JoinMatchDto, TeamScoreDto, UpdateMatchDto } from './dto/update-match.dto'
 import { MatchState } from '@prisma/client'
 import { FormattedMatch } from './entities/match.entity'
+import { match } from 'assert'
 
 @Controller('match')
 export class MatchController {
     constructor(private readonly matchService: MatchService) {}
+
+    @Get('calculateMatchScores')
+    async calculateMatchScores() {
+        try {
+            return await this.matchService.calculateMatchScores()
+        } catch (error) {}
+    }
 
     @Post()
     create(@Body() createMatchDto: CreateMatchDto) {
@@ -73,7 +81,9 @@ export class MatchController {
     @Delete(':id')
     async remove(@Param('id') id: string) {
         try {
-            return await this.matchService.remove(id)
+            const res = await this.matchService.remove(id)
+
+            return res
         } catch (error) {}
     }
 }

@@ -193,7 +193,7 @@ export class MatchService {
                 },
             },
             orderBy: {
-                updatedAt: 'asc',
+                updatedAt: 'desc',
             },
         })
 
@@ -319,7 +319,7 @@ export class MatchService {
             )
 
             if (winConditionReached) {
-                const winningTeam = match.teamScores.sort((a, b) => a.score - b.score)
+                const winningTeam = match.teamScores.sort((a, b) => b.score - a.score)
                 const updatedMatch = await this.prisma.match.update({
                     where: {
                         id: matchId,
@@ -486,5 +486,35 @@ export class MatchService {
                 id,
             },
         })
+    }
+
+    async calculateMatchScores() {
+        const matches = await this.prisma.match.findMany({
+            where: {
+                state: 'COMPLETED',
+            },
+            include: {
+                teamScores: {
+                    orderBy: {
+                        score: 'desc',
+                    },
+                },
+            },
+        })
+
+        const promises = matches.map((match) => {
+            return this.prisma.match.update({
+                where: {
+                    id: match.id,
+                },
+                data: {
+                    winningTeamId: match.teamScores[0].teamId,
+                },
+            })
+        })
+
+        const res = await Promise.all(promises)
+
+        return res
     }
 }

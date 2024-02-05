@@ -35,15 +35,15 @@ model Elo {
     updatedAt DateTime @updatedAt @db.Timestamptz(6)
     
     // relations
-    team Team @relation(fields: [teamId], references: [id])
+    team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
     teamId String
 }
 
 model UserTeams {
-    user User @relation(fields: [userId], references: [id])
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
     userId String 
 
-    team Team @relation(fields: [teamId], references: [id])
+    team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
     teamId String 
     
     createdAt DateTime @default(now()) @db.Timestamptz(6)
@@ -79,10 +79,10 @@ model TeamScore {
     updatedAt   DateTime @updatedAt @db.Timestamptz(6)
 
     // relations
-    team Team @relation(fields: [teamId], references: [id])
+    team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
     teamId String
     
-    match Match @relation(fields: [matchId], references: [id])
+    match Match @relation(fields: [matchId], references: [id], onDelete: Cascade)
     matchId String
 
     @@unique(name: "teamIdMatchId",[teamId, matchId])
