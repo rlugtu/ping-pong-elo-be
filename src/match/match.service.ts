@@ -509,6 +509,7 @@ export class MatchService {
                 },
                 data: {
                     winningTeamId: match.teamScores[0].teamId,
+                    updatedAt: undefined,
                 },
             })
         })
