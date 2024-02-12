@@ -326,7 +326,7 @@ export class MatchService {
                     },
                     data: {
                         state: 'COMPLETED',
-                        winningTeamId: winningTeam[0].id,
+                        winningTeamId: winningTeam[0].teamId,
                     },
                     include: {
                         teamA: {
