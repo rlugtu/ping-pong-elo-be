@@ -60,6 +60,18 @@ export class TeamService {
         return `This action returns a #${id} team`
     }
 
+    // In the future: add a limit
+    async getEloHistory(id: string) {
+        return await this.prisma.elo.findMany({
+            where: {
+                teamId: id,
+            },
+            orderBy: {
+                createdAt: 'asc',
+            },
+        })
+    }
+
     update(id: number, updateTeamDto: UpdateTeamDto) {
         return `This action updates a #${id} team`
     }
