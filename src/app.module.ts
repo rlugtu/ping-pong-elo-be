@@ -6,10 +6,11 @@ import { MatchModule } from './match/match.module'
 import { PrismaService } from './prisma/prisma.service'
 import { TeamModule } from './team/team.module'
 import { MatchWebSocketGateway } from './match-web-socket/match-web-socket.gateway'
+import { SeasonModule } from './season/season.module';
 
 @Module({
-    imports: [UsersModule, MatchModule, TeamModule],
-    controllers: [AppController],
-    providers: [AppService, PrismaService, MatchWebSocketGateway],
+  imports: [UsersModule, MatchModule, TeamModule, SeasonModule],
+  controllers: [AppController],
+  providers: [AppService, PrismaService, MatchWebSocketGateway],
 })
-export class AppModule {}
+export class AppModule { }
