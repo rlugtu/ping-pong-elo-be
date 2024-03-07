@@ -7,10 +7,14 @@ import { UserEntity } from './entities/user.entity'
 import { getTeamCurrentElo } from 'src/utils/team'
 import { Team } from 'src/team/entities/team.entity'
 import { STARTING_ELO } from 'src/elo-config'
+import { TeamService } from 'src/team/team.service'
 
 @Injectable()
 export class UsersService {
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private prisma: PrismaService,
+        private teamService: TeamService,
+    ) {}
 
     async create(createUserDto: CreateUserDto) {
         const user = await this.prisma.user.upsert({
@@ -90,6 +94,40 @@ export class UsersService {
         return users
     }
 
+    async getUserPerformanceSummary(id: string) {
+        const user = await this.prisma.user.findFirstOrThrow({
+            where: {
+                id,
+            },
+            include: {
+                teams: {
+                    include: {
+                        team: {
+                            include: {
+                                users: {
+                                    include: {
+                                        user: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        })
+
+        const soloTeam = user.teams.find((team) => {
+            return team.team.users.length === 1
+        })
+
+        // FUTURE USE FOR TEAM SUPPORT
+        // const pairedTeams = user.teams.find((team) => {
+        //     return team.team.users.length > 1
+        // })
+
+        return this.teamService.getHeadToHeads(soloTeam.teamId)
+    }
+
     async findOne(id: string): Promise<UserEntity> {
         const user = await this.prisma.user.findFirstOrThrow({
             where: {
@@ -134,6 +172,7 @@ export class UsersService {
             ...user,
             elo: soloElo,
             teams: formattedDuoTeams,
+            performanceSummary: await this.getUserPerformanceSummary(id),
         })
 
         return res
