@@ -30,6 +30,11 @@ export class TeamController {
         return this.teamService.getEloHistory(id)
     }
 
+    @Get(':id/h2h')
+    getTeamMatchupRecords(@Param('id') id: string) {
+        return this.teamService.getHeadToHeads(id)
+    }
+
     @Patch(':id')
     update(@Param('id') id: string, @Body() updateTeamDto: UpdateTeamDto) {
         return this.teamService.update(+id, updateTeamDto)
