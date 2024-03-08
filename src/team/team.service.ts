@@ -118,7 +118,11 @@ export class TeamService {
             headToHeads: [],
         }
 
-        matches.forEach((match) => {
+        for (const match of matches) {
+            if (match.state !== 'COMPLETED') {
+                continue
+            }
+
             const isTeamA = match.teamAId === id
             const opposingTeamId = isTeamA ? match.teamBId : match.teamAId
             const opposingTeamUsers = isTeamA
@@ -126,7 +130,6 @@ export class TeamService {
                 : match.teamA.users.map((user) => user.user.firstName)
 
             const isWinner = match.winningTeamId === id
-            const record = headToHeadRecords.get(opposingTeamId)
 
             if (isWinner) {
                 teamPerformance.totalWins++
@@ -134,6 +137,7 @@ export class TeamService {
                 teamPerformance.totalLosses++
             }
 
+            const record = headToHeadRecords.get(opposingTeamId)
             if (!record) {
                 headToHeadRecords.set(opposingTeamId, {
                     wins: isWinner ? 1 : 0,
@@ -147,7 +151,7 @@ export class TeamService {
                     record.losses++
                 }
             }
-        })
+        }
 
         teamPerformance.headToHeads = Array.from(headToHeadRecords, ([teamId, record]) => ({
             teamId,
