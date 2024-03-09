@@ -344,69 +344,70 @@ export class MatchService {
             winningTeamScoreRecord.isFinalScore && losingTeamScoreRecord.isFinalScore
         const hasWonBy2 = Math.abs(winningTeamScoreRecord.score - losingTeamScoreRecord.score) >= 2
 
-        if (matchScoresAreFinalized && hasWonBy2) {
-            const winConditionReached =
-                winningTeamScoreRecord.score >= match.winningScore && hasWonBy2
-            if (winConditionReached) {
-                const updatedMatch = await this.prisma.match.update({
-                    where: {
-                        id: matchId,
-                    },
-                    data: {
-                        state: 'COMPLETED',
-                        winningTeamId: winningTeam.teamId,
-                    },
-                    include: {
-                        teamA: {
-                            include: {
-                                score: {
-                                    orderBy: {
-                                        createdAt: 'desc',
-                                    },
-                                },
-                            },
-                        },
-                        teamB: {
-                            include: {
-                                score: {
-                                    orderBy: {
-                                        createdAt: 'desc',
-                                    },
-                                },
-                            },
-                        },
-                    },
-                })
+        if (!matchScoresAreFinalized) {
+            return
+        }
 
-                await this.updateEloRatings(
-                    {
-                        teamA: {
-                            teamId: match.teamA.id,
-                            score: updatedMatch.teamA.score[0].score,
-                            isFinalScore: true,
-                        },
-                        teamB: {
-                            teamId: match.teamB.id,
-                            score: updatedMatch.teamB.score[0].score,
-                            isFinalScore: true,
-                        },
-                    },
-                    match.id,
-                )
-            } else {
-                // if last user submission wasn't winning, reset the game to in progress
-                await this.prisma.teamScore.update({
-                    where: {
-                        teamIdMatchId: {
-                            teamId,
-                            matchId,
+        const winConditionReached = winningTeamScoreRecord.score >= match.winningScore && hasWonBy2
+        if (winConditionReached) {
+            const updatedMatch = await this.prisma.match.update({
+                where: {
+                    id: matchId,
+                },
+                data: {
+                    state: 'COMPLETED',
+                    winningTeamId: winningTeamScoreRecord.teamId,
+                },
+                include: {
+                    teamA: {
+                        include: {
+                            score: {
+                                orderBy: {
+                                    createdAt: 'desc',
+                                },
+                            },
                         },
                     },
-                    data: {
-                        isFinalScore: false,
+                    teamB: {
+                        include: {
+                            score: {
+                                orderBy: {
+                                    createdAt: 'desc',
+                                },
+                            },
+                        },
                     },
-                })
-            }
+                },
+            })
+
+            await this.updateEloRatings(
+                {
+                    teamA: {
+                        teamId: match.teamA.id,
+                        score: updatedMatch.teamA.score[0].score,
+                        isFinalScore: true,
+                    },
+                    teamB: {
+                        teamId: match.teamB.id,
+                        score: updatedMatch.teamB.score[0].score,
+                        isFinalScore: true,
+                    },
+                },
+                match.id,
+            )
+        } else {
+            // if last user submission wasn't winning, reset the game to in progress
+            await this.prisma.teamScore.update({
+                where: {
+                    teamIdMatchId: {
+                        teamId,
+                        matchId,
+                    },
+                },
+                data: {
+                    isFinalScore: false,
+                },
+            })
         }
     }
 
