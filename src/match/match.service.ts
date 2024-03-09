@@ -335,25 +335,26 @@ export class MatchService {
             },
         })
 
-        const matchScoresAreFinalized = match.teamScores.every((score) => {
-            return score.isFinalScore === true
-        })
+        const scoresSortedByScore = match.teamScores.sort((a, b) => b.score - a.score)
+        const winningTeamScoreRecord = scoresSortedByScore[0]
+        const losingTeamScoreRecord = scoresSortedByScore.find(
+            (team) => team.id !== winningTeamScoreRecord.id,
+        )
+        const matchScoresAreFinalized =
+            winningTeamScoreRecord.isFinalScore && losingTeamScoreRecord.isFinalScore
+        const hasWonBy2 = Math.abs(winningTeamScoreRecord.score - losingTeamScoreRecord.score) >= 2
 
-        if (matchScoresAreFinalized) {
-            // Check if win condition has been reached
-            const winConditionReached = match.teamScores.some(
-                (score) => score.score >= match.winningScore,
-            )
-
+        if (matchScoresAreFinalized && hasWonBy2) {
+            const winConditionReached =
+                winningTeamScoreRecord.score >= match.winningScore && hasWonBy2
             if (winConditionReached) {
-                const winningTeam = match.teamScores.sort((a, b) => b.score - a.score)
                 const updatedMatch = await this.prisma.match.update({
                     where: {
                         id: matchId,
                     },
                     data: {
                         state: 'COMPLETED',
-                        winningTeamId: winningTeam[0].teamId,
+                        winningTeamId: winningTeam.teamId,
                     },
                     include: {
                         teamA: {
@@ -376,7 +377,7 @@ export class MatchService {
                         },
                     },
                 })
-                console.log('before update', match.id)
+
                 await this.updateEloRatings(
                     {
                         teamA: {
