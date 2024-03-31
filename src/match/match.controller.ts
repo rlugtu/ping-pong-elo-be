@@ -5,6 +5,7 @@ import { JoinMatchDto, TeamScoreDto, UpdateMatchDto } from './dto/update-match.d
 import { MatchState } from '@prisma/client'
 import { FormattedMatch } from './entities/match.entity'
 import { match } from 'assert'
+import { MatchScoreCardDto } from './dto/match-score-card.dto-'
 
 @Controller('match')
 export class MatchController {
@@ -63,14 +64,28 @@ export class MatchController {
     } catch (error) { }
   }
 
-  @Patch(':id/score')
-  async updateMatchScore(@Param('id') id: string, @Body() scoreData: TeamScoreDto) {
-    try {
-      return await this.matchService.updateMatchScore(id, scoreData)
-    } catch (error) {
-      console.log({ error })
-    }
+  @Patch(':id/submit-score')
+  async submitMatchScore(
+    @Param('id') id: string,
+    @Body() matchScore: MatchScoreCardDto
+  ) {
+      try {
+        return await this.matchService.createOrUpdateMatchScoreCard(matchScore)
+      } catch(error) {
+        console.log(error)
+      }
   }
+
+  // @Patch(':id/score')
+  // async updateMatchScore(@Param('id') id: string, @Body() scoreData: TeamScoreDto) {
+  //   try {
+  //     return await this.matchService.updateMatchScore(id, scoreData)
+  //   } catch (error) {
+  //     console.log({ error })
+  //   }
+  // }
+
+
 
   @Patch(':id/join')
   async joinMatch(@Param('id') id: string, @Body() joinMatchDto: JoinMatchDto) {
