@@ -15,6 +15,7 @@ import { plainToClass } from 'class-transformer'
 import { convertPrismaMatchTeamToFormattedMatchTeam } from 'src/utils/match'
 import { flattenPrismaTeamUsers, getTeamCurrentElo } from 'src/utils/team'
 import { ELO_CHANGE_CONSTANT, ELO_CHANGE_CONSTANT_PLACEMENTS, STARTING_ELO } from 'src/elo-config'
+import { MatchScoreCardDto } from './dto/match-score-card.dto-'
 
 @Injectable()
 export class MatchService {
@@ -187,6 +188,7 @@ export class MatchService {
                 }),
             },
             include: {
+                scoreCards: true,
                 teamA: {
                     include: {
                         users: {
@@ -241,6 +243,19 @@ export class MatchService {
                 id: matchId,
             },
             include: {
+                scoreCards: {
+                    include: {
+                        reportingTeam: {
+                            include: {
+                                users: {
+                                    include: {
+                                        user: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
                 teamScores: {
                     where: {
                         matchId,
@@ -255,7 +270,7 @@ export class MatchService {
                                 },
                                 eloHistory: {
                                     orderBy: {
-                                        elo: 'desc',
+                                        createdAt: 'desc',
                                     },
                                 },
                             },
@@ -273,6 +288,8 @@ export class MatchService {
         const teamAInfo = match.teamScores.filter(
             (teamScore) => teamScore.teamId === match.teamAId,
         )[0]
+
+        console.log(teamAInfo)
 
         const teamA = plainToClass(FormattedMatchTeam, {
             ...teamAInfo.team,
@@ -300,114 +317,112 @@ export class MatchService {
         })
     }
 
-    async updateMatchScore(matchId: string, matchInfo: TeamScoreDto): Promise<void> {
-        const { teamId, score, isFinalScore } = matchInfo
+    // async updateMatchScore(matchId: string, matchInfo: TeamScoreDto): Promise<void> {
+    //     const { teamId, score, isFinalScore } = matchInfo
 
-        await this.prisma.teamScore.update({
-            where: {
-                teamIdMatchId: {
-                    teamId,
-                    matchId,
-                },
-            },
-            data: {
-                score,
-                isFinalScore,
-            },
-        })
+    //     await this.prisma.teamScore.update({
+    //         where: {
+    //             teamIdMatchId: {
+    //                 teamId,
+    //                 matchId,
+    //             },
+    //         },
+    //         data: {
+    //             score,
+    //             isFinalScore,
+    //         },
+    //     })
 
-        const match = await this.prisma.match.findFirst({
-            where: {
-                id: matchId,
-            },
-            include: {
-                teamScores: true,
-                teamA: {
-                    include: {
-                        score: true,
-                    },
-                },
-                teamB: {
-                    include: {
-                        score: true,
-                    },
-                },
-            },
-        })
+    //     const match = await this.prisma.match.findFirst({
+    //         where: {
+    //             id: matchId,
+    //         },
+    //         include: {
+    //             teamScores: true,
+    //             teamA: {
+    //                 include: {
+    //                     score: true,
+    //                 },
+    //             },
+    //             teamB: {
+    //                 include: {
+    //                     score: true,
+    //                 },
+    //             },
+    //         },
+    //     })
 
-        const matchScoresAreFinalized = match.teamScores.every((score) => {
-            return score.isFinalScore === true
-        })
+    //     const matchScoresAreFinalized = match.teamScores.every((score) => {
+    //         return score.isFinalScore === true
+    //     })
 
-        if (matchScoresAreFinalized) {
-            // Check if win condition has been reached
-            const winConditionReached = match.teamScores.some(
-                (score) => score.score >= match.winningScore,
-            )
+    //     if (matchScoresAreFinalized) {
+    //         // Check if win condition has been reached
+    //         const winConditionReached = match.teamScores.some(
+    //             (score) => score.score >= match.winningScore,
+    //         )
 
-            if (winConditionReached) {
-                const winningTeam = match.teamScores.sort((a, b) => b.score - a.score)
-                const updatedMatch = await this.prisma.match.update({
-                    where: {
-                        id: matchId,
-                    },
-                    data: {
-                        state: 'COMPLETED',
-                        winningTeamId: winningTeam[0].teamId,
-                    },
-                    include: {
-                        teamA: {
-                            include: {
-                                score: {
-                                    orderBy: {
-                                        createdAt: 'desc',
-                                    },
-                                },
-                            },
-                        },
-                        teamB: {
-                            include: {
-                                score: {
-                                    orderBy: {
-                                        createdAt: 'desc',
-                                    },
-                                },
-                            },
-                        },
-                    },
-                })
-                console.log('before update', match.id)
-                await this.updateEloRatings(
-                    {
-                        teamA: {
-                            teamId: match.teamA.id,
-                            score: updatedMatch.teamA.score[0].score,
-                            isFinalScore: true,
-                        },
-                        teamB: {
-                            teamId: match.teamB.id,
-                            score: updatedMatch.teamB.score[0].score,
-                            isFinalScore: true,
-                        },
-                    },
-                    match.id,
-                )
-            } else {
-                // if last user submission wasn't winning, reset the game to in progress
-                await this.prisma.teamScore.update({
-                    where: {
-                        teamIdMatchId: {
-                            teamId,
-                            matchId,
-                        },
-                    },
-                    data: {
-                        isFinalScore: false,
-                    },
-                })
-            }
-        }
-    }
+    //         if (winConditionReached) {
+    //             const winningTeam = match.teamScores.sort((a, b) => b.score - a.score)
+    //             const updatedMatch = await this.prisma.match.update({
+    //                 where: {
+    //                     id: matchId,
+    //                 },
+    //                 data: {
+    //                     state: 'COMPLETED',
+    //                     winningTeamId: winningTeam[0].teamId,
+    //                 },
+    //                 include: {
+    //                     teamA: {
+    //                         include: {
+    //                             score: {
+    //                                 orderBy: {
+    //                                     createdAt: 'desc',
+    //                                 },
+    //                             },
+    //                         },
+    //                     },
+    //                     teamB: {
+    //                         include: {
+    //                             score: {
+    //                                 orderBy: {
+    //                                     createdAt: 'desc',
+    //                                 },
+    //                             },
+    //                         },
+    //                     },
+    //                 },
+    //             })
+    //             console.log('before update', match.id)
+    //             await this.updateEloRatings(
+    //                 {
+    //                     teamA: {
+    //                         teamId: match.teamA.id,
+    //                         score: updatedMatch.teamA.score[0].score,
+    //                     },
+    //                     teamB: {
+    //                         teamId: match.teamB.id,
+    //                         score: updatedMatch.teamB.score[0].score,
+    //                     },
+    //                 },
+    //                 match.id,
+    //             )
+    //         } else {
+    //             // if last user submission wasn't winning, reset the game to in progress
+    //             await this.prisma.teamScore.update({
+    //                 where: {
+    //                     teamIdMatchId: {
+    //                         teamId,
+    //                         matchId,
+    //                     },
+    //                 },
+    //                 data: {
+    //                     isFinalScore: false,
+    //                 },
+    //             })
+    //         }
+    //     }
+    // }
 
     async updateEloRatings(scoreData: UpdateEloRatingDto, matchId: string) {
         const { teamA, teamB } = scoreData
@@ -489,6 +504,66 @@ export class MatchService {
                 },
             ],
         })
+    }
+
+    async createOrUpdateMatchScoreCard(scoreCard: MatchScoreCardDto) {
+        await this.prisma.matchScoreCard.upsert({
+            where: {
+                matchIdReportingTeamId: {
+                    matchId: scoreCard.matchId,
+                    reportingTeamId: scoreCard.reportingTeamId,
+                },
+            },
+            create: scoreCard,
+            update: scoreCard,
+        })
+
+        const scoreCards = await this.prisma.matchScoreCard.findMany({
+          where: {
+            matchId: scoreCard.matchId
+          },
+          include: {
+            winningTeam: true,
+            losingTeam: true
+          }
+        })
+
+        if (scoreCards.length !== 2 || !this.allScoresMatch(scoreCards, scoreCards[0])) {
+          return
+        }
+
+        // Update Match Info
+        await this.prisma.match.update({
+          where: {
+            id: scoreCard.matchId
+          },
+          data: {
+            state: 'COMPLETED',
+            winningTeamId: scoreCard.winningTeamId
+          }
+        })
+        // Update Elos
+        await this.updateEloRatings({
+          teamA: {
+            teamId: scoreCard.winningTeamId,
+            score: scoreCard.winningTeamScore,
+          },
+          teamB: {
+            teamId: scoreCard.losingTeamId,
+            score: scoreCard.losingTeamScore,
+          }
+        },scoreCard.matchId)
+
+    }
+
+    allScoresMatch(scores: MatchScoreCardDto[], reference: MatchScoreCardDto) {
+      return scores.every((score) => {
+        const winningScoresMatch = score.winningTeamScore === reference.winningTeamScore
+        const losingScoresMatch = score.losingTeamScore === reference.losingTeamScore
+        const winningTeamIdsMatch = score.winningTeamId === reference.winningTeamId
+        const losingTeamIdsMatch = score.losingTeamId === reference.losingTeamId
+        return  winningScoresMatch && losingScoresMatch && winningTeamIdsMatch && losingTeamIdsMatch
+      })
     }
 
     update(id: number, updateMatchDto: UpdateMatchDto) {

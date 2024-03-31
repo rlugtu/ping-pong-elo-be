@@ -16,9 +16,6 @@ export class TeamScoreDto {
 
     @IsNumber()
     score: number
-
-    @IsBoolean()
-    isFinalScore: boolean = false
 }
 
 export class UpdateEloRatingDto {
