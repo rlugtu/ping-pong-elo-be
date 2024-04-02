@@ -6,17 +6,15 @@ import {
 } from '@nestjs/websockets'
 import { MatchState } from '@prisma/client'
 import { Server } from 'socket.io'
-import { FormattedLobby } from 'src/match/entities/match.entity'
+import { FormattedLobby, FormattedMatch } from 'src/match/entities/match.entity'
 import { MatchService } from 'src/match/match.service'
 import { MatchChallenge } from 'src/types/match'
 import { Notification } from 'src/types/notification'
 
 type MatchRoomMap = Map<string, MatchRoomInfo>
 type MatchRoomInfo = {
-    scores: {
-        [teamId: string]: number
-    }
     state: MatchState
+    match: FormattedMatch
     participants: string[] // string of userIds
 }
 @WebSocketGateway({ cors: true })
@@ -30,6 +28,30 @@ export class MatchWebSocketGateway {
     server: Server
 
     public constructor(private matchService: MatchService) {}
+
+    async getOrSetMatchRoomByMatchId(matchId: string) {
+        const matchRoom = this.matchRoomsById.get(matchId)
+
+        if (!matchRoom) {
+            const foundMatch = await this.matchService.findOne(matchId)
+
+            const participants = [
+                ...foundMatch.teamA.users.map((user) => user.id),
+                ...foundMatch.teamB.users.map((user) => user.id),
+            ]
+
+            const matchRoomInfo = {
+                state: foundMatch.state,
+                participants,
+                match: foundMatch,
+            }
+
+            this.matchRoomsById.set(foundMatch.id, matchRoomInfo)
+            return matchRoomInfo
+        }
+
+        return matchRoom
+    }
 
     @SubscribeMessage('newConnection')
     async saveUserToServer(
@@ -56,80 +78,33 @@ export class MatchWebSocketGateway {
         },
     ) {
         const { socketId, matchId } = payload
-        await this.server.in(socketId).socketsJoin(matchId)
+        this.server.in(socketId).socketsJoin(matchId)
 
-        const matchRoomExists = this.matchRoomsById.get(matchId)
-        if (!matchRoomExists) {
-            const foundMatch = await this.matchService.findOne(matchId)
-            const scores = {
-                [foundMatch.teamA.id]: foundMatch.teamA.score,
-                [foundMatch.teamB.id]: foundMatch.teamB.score,
+        const matchRoom = await this.getOrSetMatchRoomByMatchId(matchId)
+        const { match, participants } = matchRoom
+
+        // alert other users you're in the room
+        const peopleInRoom = await this.server.in(matchId).fetchSockets()
+        const matchParticpantAmount = match.mode === 'SINGLES' ? 2 : 4
+        if (peopleInRoom.length < matchParticpantAmount) {
+            const socketsToEmitTo = participants
+                .map((userId) => this.socketsByUserId.get(userId))
+                .filter((socketId) => socketId !== payload.socketId)
+
+            const notificationMessage: Notification = {
+                title: 'Opponent has checked in',
+                description:
+                    'Your opponent is waiting for you in your match. Head over there to start recording your score.',
+                cta: {
+                    name: 'Go',
+                    link: `/match/${match.id}`,
+                },
             }
 
-            const participants = [
-                ...foundMatch.teamA.users.map((user) => user.id),
-                ...foundMatch.teamB.users.map((user) => user.id),
-            ]
-
-            const matchRoomInfo = {
-                scores,
-                state: foundMatch.state,
-                participants,
-            }
-
-            this.matchRoomsById.set(foundMatch.id, matchRoomInfo)
-
-            this.server.to(matchId).emit('matchScoreUpdated', {
-                matchId,
-                ...matchRoomInfo,
-            })
-
-            // alert other users you're in the room
-            const peopleInRoom = await this.server.in(matchId).fetchSockets()
-            const matchParticpantAmount = foundMatch.mode === 'SINGLES' ? 2 : 4
-            if (peopleInRoom.length < matchParticpantAmount) {
-                const socketsToEmitTo = participants
-                    .map((userId) => this.socketsByUserId.get(userId))
-                    .filter((socketId) => socketId !== payload.socketId)
-
-                const notificationMessage: Notification = {
-                    title: 'Opponent has checked in',
-                    description:
-                        'Your opponent is waiting for you in your match. Head over there to start recording your score.',
-                    cta: {
-                        name: 'Go',
-                        link: `/match/${foundMatch.id}`,
-                    },
-                }
-
-                socketsToEmitTo.forEach((socketId) => {
-                    this.server.in(socketId).emit('notificationAlert', notificationMessage)
-                })
-            }
-        } else {
-            const matchRoomInfo = this.matchRoomsById.get(matchId)
-            this.setAndSendScoresToMatchClients({
-                matchId,
-                matchRoomInfo,
+            socketsToEmitTo.forEach((socketId) => {
+                this.server.in(socketId).emit('notificationAlert', notificationMessage)
             })
         }
-    }
-
-    @SubscribeMessage('matchScoreUpdateEvent')
-    async setAndSendScoresToMatchClients(
-        @MessageBody()
-        payload: {
-            matchId: string
-            matchRoomInfo: MatchRoomInfo
-        },
-    ) {
-        const { matchId } = payload
-
-        this.matchRoomsById.set(matchId, payload.matchRoomInfo)
-        this.server.to(matchId).emit('matchScoreUpdated', {
-            matchId,
-            matchRoomInfo: payload.matchRoomInfo,
-        })
     }
 
     @SubscribeMessage('leaveMatchRoom')
@@ -144,7 +119,10 @@ export class MatchWebSocketGateway {
         socketToLeave.leave(payload.matchId)
     }
 
-    // LOBBIES
+    /**
+      OPEN LOBBIES
+      Visible to all players
+    */
     @SubscribeMessage('getLobbiesRequestByClient')
     async getLobbiesRequest(@MessageBody() payload: { socketId: string }) {
         const lobbies = await this.matchService.getAllOpenLobbies()
@@ -157,7 +135,45 @@ export class MatchWebSocketGateway {
         this.server.emit('getLobbiesResponse', lobbies)
     }
 
-    // IN PROGRESS MATCHES
+    /**
+      MATCH
+      Match info
+    */
+
+    @SubscribeMessage('getMatchInfoRequest')
+    async getAndEmitMatchInfoToUser(@MessageBody() payload: {
+      matchId: string,
+      socketId: string
+    }) {
+      const matchRoom = await this.getOrSetMatchRoomByMatchId(payload.matchId)
+
+      const { match } = matchRoom
+      this.server.in(payload.socketId).emit('getMatchInfoResponse', match)
+    }
+
+    @SubscribeMessage('anounceMatchUpdatesToParticipantsRequest')
+    async getAndAnounceMatchInfoToParticipants(@MessageBody() payload: {
+      matchId: string,
+      socketId: string
+    }) {
+      const { matchId } = payload;
+      const matchRoom = await this.getOrSetMatchRoomByMatchId(matchId)
+
+      const updatedMatch = await this.matchService.findOne(matchId)
+      this.matchRoomsById.set(matchId, {...matchRoom, match: updatedMatch})
+      const socketsToEmitTo = matchRoom.participants
+          .map((userId) => this.socketsByUserId.get(userId))
+
+      socketsToEmitTo.forEach((socketId) => {
+          this.server.in(socketId).emit('matchInfoUpdateAnouncement', updatedMatch)
+      })
+    }
+
+
+
+    /**
+    IN PROGRESS MATCHES
+    */
     @SubscribeMessage('getInProgressMatchesByUserIdRequest')
     async getInProgressMatchesByUserId(
         @MessageBody() payload: { userId: string; socketId: string },
@@ -167,7 +183,9 @@ export class MatchWebSocketGateway {
             payload.userId,
         )
 
-        this.server.emit('getInProgressMatchesByUserIdResponse', inProgressMatches)
+        this.server
+            .in(payload.socketId)
+            .emit('getInProgressMatchesByUserIdResponse', inProgressMatches)
     }
 
     @SubscribeMessage('notifyParticipantsOnMatchProgressEvent')

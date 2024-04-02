@@ -157,6 +157,7 @@ export class MatchService {
         state: MatchState,
         filterByUserId: string = '',
     ): Promise<FormattedMatch[]> {
+
         const matches = await this.prisma.match.findMany({
             where: {
                 state,
@@ -233,12 +234,11 @@ export class MatchService {
                 teamB: convertPrismaMatchTeamToFormattedMatchTeam(match.id, match.teamB),
             })
         })
-
         return formattedMatch
     }
 
     async findOne(matchId: string): Promise<FormattedMatch> {
-        const match = await this.prisma.match.findUniqueOrThrow({
+        const match = await this.prisma.match.findUnique({
             where: {
                 id: matchId,
             },
@@ -289,7 +289,7 @@ export class MatchService {
             (teamScore) => teamScore.teamId === match.teamAId,
         )[0]
 
-        console.log(teamAInfo)
+        // console.log(teamAInfo)
 
         const teamA = plainToClass(FormattedMatchTeam, {
             ...teamAInfo.team,
@@ -487,8 +487,8 @@ export class MatchService {
         //     eloBNew,
         // })
         //
-        console.log('hello')
-        console.log({ matchId })
+        // console.log('hello')
+        // console.log({ matchId })
 
         await this.prisma.elo.createMany({
             data: [
@@ -542,6 +542,7 @@ export class MatchService {
             winningTeamId: scoreCard.winningTeamId
           }
         })
+
         // Update Elos
         await this.updateEloRatings({
           teamA: {

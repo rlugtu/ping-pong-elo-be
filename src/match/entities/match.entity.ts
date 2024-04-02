@@ -1,4 +1,4 @@
-import { Elo, MatchMode, MatchState, TeamScore, User } from '@prisma/client'
+import { Elo, MatchMode, MatchScoreCard, MatchState, TeamScore, User } from '@prisma/client'
 import { Exclude } from 'class-transformer'
 import { MatchWinningScore } from 'src/types/match'
 
@@ -10,6 +10,7 @@ export class FormattedMatch {
     teamA: FormattedMatchTeam
     teamB: FormattedMatchTeam
     winningScore: MatchWinningScore
+    scoreCards: MatchScoreCard[]
 
     @Exclude()
     teamAId: string
