@@ -236,4 +236,23 @@ export class TeamService {
 
         return foundTeam[0]
     }
+
+    async resetAllTeamElos(teamSize: number) {
+      const teams = (await this.prisma.team.findMany({
+        include: {
+          users: true
+        }
+      })).filter((team) => team.users.length === teamSize)
+
+      const resettedElos = teams.map((team) => {
+        return {
+          teamId: team.id,
+          elo: 1200,
+        }
+      })
+
+      await this.prisma.elo.createMany({
+        data: resettedElos
+      })
+    }
 }
